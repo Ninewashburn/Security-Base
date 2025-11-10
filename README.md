@@ -133,6 +133,7 @@ security-base/
 | Rôle métier | ![Rôle métier](docs/base_security_role_metier.jpeg) |
 | Liste des templates | ![Liste des templates](docs/base_security_template_list.jpeg) |
 | Vue template | ![Vue template](docs/base_security_template_view.jpeg) |
+| Matrice des droits | ![Matrice des droits](docs/matrice_des_droits.jpeg) |
 
 ### 📎 Documents et exports
 
