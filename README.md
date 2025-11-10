@@ -1,9 +1,9 @@
 # Security-Base
 
-> **Application complète de gestion d'incidents de sécurité** - Solution d'entreprise moderne avec Angular 20+ et Laravel 11
+> **Application complète de gestion d'incidents de sécurité** - Solution d'entreprise moderne avec Angular 20+ et Laravel 12
 
 [![Angular](https://img.shields.io/badge/Angular-20+-DD0031?style=for-the-badge&logo=angular)](https://angular.io/)
-[![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com/)
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![PHP](https://img.shields.io/badge/PHP-8.4+-777BB4?style=for-the-badge&logo=php)](https://www.php.net/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4+-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
@@ -48,7 +48,7 @@ security-base/
 │   │   └── assets/
 │   └── package.json
 │
-└── backend/               # Laravel 11 API
+└── backend/               # Laravel 12 API
     ├── app/
     │   ├── Http/
     │   │   ├── Controllers/
@@ -67,7 +67,7 @@ security-base/
 
 - ✅ **Interface moderne** avec design responsive et mode sombre/clair automatique
 - ✅ **Éditeur WYSIWYG** avancé (Quill.js) pour la documentation riche
-- ✅ **API RESTful** performante avec Laravel 11 et Sanctum
+- ✅ **API RESTful** performante avec Laravel 12 et Sanctum
 - ✅ **Système de recherche** intelligent avec filtres avancés et suggestions
 - ✅ **Gestion des colonnes** dynamique avec drag & drop et redimensionnement
 - ✅ **Export multi-formats** (XLSX, PDF) avec options temporelles flexibles
@@ -148,38 +148,6 @@ security-base/
 
 ---
 
-## 📝 Documentation complète
-
-### Frontend Angular
-
-Retrouvez le guide complet sur le frontend Angular (installation, configuration, architecture, bonnes pratiques) :
-
-👉 [README Angular détaillé](docs/README%20angular%20final.md)
-
-**Contenu :**
-- Installation et configuration
-- Architecture des composants et services
-- Gestion de l'état avec RxJS
-- Personnalisation des thèmes
-- Tests unitaires et E2E
-- Optimisations de performance
-
-### Backend Laravel
-
-Retrouvez le guide complet du backend API Laravel 11 (installation, endpoints, sécurité, déploiement) :
-
-👉 [README Laravel détaillé](docs/README%20laravel%20final.md)
-
-**Contenu :**
-- Installation et prérequis
-- Configuration de la base de données
-- Documentation des endpoints API
-- Authentification JWT avec Sanctum
-- Gestion des permissions
-- Déploiement en production
-
----
-
 ## 🏗 Architecture
 
 ### Vue d'ensemble système
@@ -193,7 +161,7 @@ graph TB
         D[RxJS State]
     end
     
-    subgraph "Backend - Laravel 11"
+    subgraph "Backend - Laravel 12"
         E[API REST]
         F[Controllers]
         G[Form Requests]
@@ -269,7 +237,7 @@ sequenceDiagram
 | Couche | Technologies |
 |--------|-------------|
 | **Frontend** | Angular 20, TypeScript 5.8, TailwindCSS 3.4, RxJS 7.8, Quill 2.0 |
-| **Backend** | Laravel 11, PHP 8.4, Sanctum Auth, Eloquent ORM |
+| **Backend** | Laravel 12, PHP 8.4, Sanctum Auth, Eloquent ORM |
 | **Base de données** | MariaDB 11 / MySQL 8.0+ |
 | **Cache** | Redis 7.x (optionnel) |
 | **Outils** | Git, NPM, Composer, Docker (optionnel) |
@@ -1436,6 +1404,36 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 ```
+
+## 📝 Documentation complète
+
+### Frontend Angular
+
+Retrouvez le guide complet sur le frontend Angular (installation, configuration, architecture, bonnes pratiques) :
+
+👉 [README Angular détaillé](docs/README%20angular%20final.md)
+
+**Contenu :**
+- Installation et configuration
+- Architecture des composants et services
+- Gestion de l'état avec RxJS
+- Personnalisation des thèmes
+- Tests unitaires et E2E
+- Optimisations de performance
+
+### Backend Laravel
+
+Retrouvez le guide complet du backend API Laravel 12 (installation, endpoints, sécurité, déploiement) :
+
+👉 [README Laravel détaillé](docs/README%20laravel%20final.md)
+
+**Contenu :**
+- Installation et prérequis
+- Configuration de la base de données
+- Documentation des endpoints API
+- Authentification JWT avec Sanctum
+- Gestion des permissions
+- Déploiement en production
 
 ---
 
