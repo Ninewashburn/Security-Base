@@ -1,0 +1,362 @@
+## Base d’incidents de sécurité (Angular – Front)
+
+## Architecture & Infrastructure
+
+- Création d'un hub permettant de centraliser les applications
+- Création d'une barre de navigation avec des éléments de navigation
+- Création d'un footer pour encadrer l'application
+- Création (dans le home) de directions vers les anciennes applications legacy
+- Création des services appropriés pour meilleure maintenabilité
+- Création des interfaces requises basées sur la base de données
+- Configuration du branchement effectué
+- Externalisation de Quill dans un service dédié
+- Module complet fonctionnel
+- Routes prêtes et commentées
+- Service d'exportation créé
+- Service de faux mail créé
+- Service interceptor
+- Service middleware
+
+## Composants & Interface
+
+- Création du composant principal : incidents.ts
+- Création d'une fonctionnalité darkMode
+- Création d'un bouton "astuce"
+- Compteur en haut d'incidents totaux, en cours et clôturés
+- Bouton d'administration d'incident fonctionnel
+- Formulaire d'ajout amélioré avec son mode sombre spécifique
+- Modale de template prédéfinie allégée
+- Blocage de fermeture modale en cliquant en dehors
+- Amélioration de la modale listant les templates d'incident
+- Optimisation de la modale de liste de diffusion
+- Ajout du bouton archive
+- Changement d'ordre des boutons d'actions
+- Modification du compteur de statut en archivé
+- Empêcher la création d'action dans les modales de template en appuyant sur entrée
+- Empêcher la validation totale de la modale en appuyant sur entrée
+- Améliorations des indications
+
+## Gestion des Colonnes & Tableaux
+
+- Possibilité de trier les données des colonnes
+- Possibilité d'afficher / masquer les colonnes
+- Ajout d'un bouton de gestion des colonnes
+- Test et redimensionnement des colonnes
+- Possibilité de trier par informations sur chaque colonne
+- Possibilité de masquer la colonne au survol
+
+## Recherche & Filtres
+
+- Barre de recherche simple et section avancées avec filtres
+- Recherche possible sur colonne à faire depuis barre simple de recherche
+- Recherche dans la liste de diffusion possible
+- Filtre de liste de diffusion amélioré
+- Amélioration des listes : listes métier / listes personnelles (+ filtre sur la visibilité, only perso, only pro)
+
+## Exports & Rapports
+
+- Export CSV
+- Export PDF multiple
+- Export PDF détail
+- Format EXCEL au lieu de CSV
+
+## Formulaires & Édition
+
+- Ajout d'objets dans le localStorage en attendant le backend
+- Création de l'édition
+- Refonte du formulaire commun création/édition
+- Ajout lien ticket Helpy création / update / détails
+- Ajout du temps d'indisponibilité
+- Amélioration du temps d'indisponibilité
+- Ajout du champ Intervenant & Rédacteur distinct
+- Ajout date de modification dans vue au détail
+- Conversions des Actions en TODO
+- Création de condition bloquante sur statut en cours
+- Ajout de mail unitaire en remplacement de mail d'alerte
+- CRUD sur la modale de pré template d'écriture d'incident
+
+## Gestion des Incidents
+
+- Suppression en localStorage
+- Affichage des données dans "Site" au lieu de "hover" classique
+- Possibilité d'archivage si clôturé
+- Archivage clôture l'incident
+- Suppression du champ Observations
+- Date de clôture impossible antérieure à date d'ouverture
+- Impossible de créer un incident avec statut "en attente" directement
+- Impossible d'éditer le statut d'un incident "en attente"
+- Tri correct sur tous les statuts, place en attente au-dessus de en cours
+- Rajout de la corbeille, avec des nouvelles méthodes de suppressions
+- Possibilité de rétrograder un incident grave ou très grave vers statut en cours (avec mail approprié)
+- Liste modifiable à la main dans incident, déliage de template individuel
+- Vue séparée dans la vue au détail des emails
+
+## Listes de Diffusion & Templates
+
+- CRUD sur la liste de diffusion
+- Possibilité d'activer ou couper la liste, sans l'effacer
+- Liste de diffusion personnelle reliée au template front
+- Retour utilisateur et empêchement de créer template prédéfini en double
+- Sécurisation des templates conditionnels
+
+## Authentification & Sécurité
+
+- Création des services AUTH et AUTH GUARD
+- Suppression du home.ts, connexion possible via SSO
+- Garde-fou sur Admin
+- Droits déclarés et fonctionnels
+- Role fonctionnel sur les métiers
+
+## Dashboard & Administration
+
+- Dashboard gestion de rôle
+- Ajout de journal historique
+- Tableau de bord intégralement fonctionnel (fullstack)
+- Métiers visibles avec rôle implémenté
+- Système de classeur sur métiers et utilisateurs
+- Ajout de pagination pour les métiers et utilisateurs dans Dashboard
+
+## Optimisations & Qualité
+
+- Suppression de code mort (dossier / fichier / import)
+- Optimisation des rechargements SPA
+- Refactoring complet
+- Nettoyage des émojis, imports, icônes, build, nommage
+- Sauvegarde localStorage intelligente améliorée
+- Ng Build OK
+- Tests OK
+
+## Styling & Responsive
+
+- Splittage du SCSS global en fichiers locaux
+- SCSS amélioré
+- Mode responsive
+- Affichage des données dans "Site" au lieu de "hover" classique
+- Vue séparée dans la vue au détail des emails
+
+## Architecture & Infrastructure
+
+- Création d'un hub permettant de centraliser les applications
+- Création d'une barre de navigation avec des éléments de navigation
+- Création d'un footer pour encadrer l'application
+- Création (dans le home) de directions vers les anciennes applications legacy
+- Création des services appropriés pour meilleure maintenabilité
+- Création des interfaces requises basées sur la base de données
+- Configuration du branchement effectué
+- Externalisation de Quill dans un service dédié
+- Module complet fonctionnel
+- Routes prêtes et commentées
+- Service d'exportation créé
+- Service de faux mail créé
+- Service interceptor
+- Service middleware
+
+## Composants & Interface
+
+- Création du composant principal : incidents.ts
+- Création d'une fonctionnalité darkMode
+- Création d'un bouton "astuce"
+- Compteur en haut d'incidents totaux, en cours et clôturés
+- Bouton d'administration d'incident fonctionnel
+- Formulaire d'ajout amélioré avec son mode sombre spécifique
+- Modale de template prédéfinie allégée
+- Blocage de fermeture modale en cliquant en dehors
+- Amélioration de la modale listant les templates d'incident
+- Optimisation de la modale de liste de diffusion
+- Ajout du bouton archive
+- Changement d'ordre des boutons d'actions
+- Modification du compteur de statut en archivé
+- Empêcher la création d'action dans les modales de template en appuyant sur entrée
+- Empêcher la validation totale de la modale en appuyant sur entrée
+- Améliorations des indications
+
+## Gestion des Colonnes & Tableaux
+
+- Possibilité de trier les données des colonnes
+- Possibilité d'afficher / masquer les colonnes
+- Ajout d'un bouton de gestion des colonnes
+- Test et redimensionnement des colonnes
+- Possibilité de trier par informations sur chaque colonne
+- Possibilité de masquer la colonne au survol
+
+## Recherche & Filtres
+
+- Barre de recherche simple et section avancées avec filtres
+- Recherche possible sur colonne à faire depuis barre simple de recherche
+- Recherche dans la liste de diffusion possible
+- Filtre de liste de diffusion amélioré
+- Amélioration des listes : listes métier / listes personnelles (+ filtre sur la visibilité, only perso, only pro)
+
+## Exports & Rapports
+
+- Export CSV
+- Export PDF multiple
+- Export PDF détail
+- Format EXCEL au lieu de CSV
+
+## Formulaires & Édition
+
+- Ajout d'objets dans le localStorage en attendant le backend
+- Création de l'édition
+- Refonte du formulaire commun création/édition
+- Ajout lien ticket Helpy création / update / détails
+- Ajout du temps d'indisponibilité
+- Amélioration du temps d'indisponibilité
+- Ajout du champ Intervenant & Rédacteur distinct
+- Ajout date de modification dans vue au détail
+- Conversions des Actions en TODO
+- Création de condition bloquante sur statut en cours
+- Ajout de mail unitaire en remplacement de mail d'alerte
+- CRUD sur la modale de pré template d'écriture d'incident
+
+## Gestion des Incidents
+
+- Suppression en localStorage
+- Affichage des données dans "Site" au lieu de "hover" classique
+- Possibilité d'archivage si clôturé
+- Archivage clôture l'incident
+- Suppression du champ Observations
+- Date de clôture impossible antérieure à date d'ouverture
+- Impossible de créer un incident avec statut "en attente" directement
+- Impossible d'éditer le statut d'un incident "en attente"
+- Tri correct sur tous les statuts, place en attente au-dessus de en cours
+- Rajout de la corbeille, avec des nouvelles méthodes de suppressions
+- Possibilité de rétrograder un incident grave ou très grave vers statut en cours (avec mail approprié)
+- Liste modifiable à la main dans incident, déliage de template individuel
+- Vue séparée dans la vue au détail des emails
+
+## Listes de Diffusion & Templates
+
+- CRUD sur la liste de diffusion
+- Possibilité d'activer ou couper la liste, sans l'effacer
+- Liste de diffusion personnelle reliée au template front
+- Retour utilisateur et empêchement de créer template prédéfini en double
+- Sécurisation des templates conditionnels
+
+## Authentification & Sécurité
+
+- Création des services AUTH et AUTH GUARD
+- Suppression du home.ts, connexion possible via SSO
+- Garde-fou sur Admin
+- Droits déclarés et fonctionnels
+- Role fonctionnel sur les métiers
+
+## Dashboard & Administration
+
+- Dashboard gestion de rôle
+- Ajout de journal historique
+- Tableau de bord intégralement fonctionnel (fullstack)
+- Métiers visibles avec rôle implémenté
+- Système de classeur sur métiers et utilisateurs
+- Ajout de pagination pour les métiers et utilisateurs dans Dashboard
+
+## Optimisations & Qualité
+
+- Suppression de code mort (dossier / fichier / import)
+- Optimisation des rechargements SPA
+- Refactoring complet
+- Nettoyage des émojis, imports, icônes, build, nommage
+- Sauvegarde localStorage intelligente améliorée
+- Ng Build OK
+- Tests OK
+
+## Styling & Responsive
+
+- Splittage du SCSS global en fichiers locaux
+- SCSS amélioré
+- Mode responsive
+- Affichage des données dans "Site" au lieu de "hover" classique
+- Vue séparée dans la vue au détail des emails
+
+## Base d’incidents de sécurité (Laravel – Back)
+
+## Initialisation & Configuration
+
+- Création du projet, premier contrôleur, model, interface
+- Base de données SQLite par défaut installée
+- Données en mock seed faites, page api/incidents fonctionnel
+- Configuration, variable, routes commentées
+- Préparation du middleware login-main
+
+## Models & Base de Données
+
+- Créations des modèles d'activetemplate, list diffusion
+- Suppression du model Observations
+- Rajout du champ de ticket tandem, nouvelle migration et BDD
+- Données SEED cohérentes
+- Controller IncidentTemplateController.php + Models à jour
+- Renommage AutoAlimentationService et AutoTemplate en noms plus cohérents : IncidentTemplateService, IncidentTemplate.php
+- Dashboard dynamique en BDD
+
+## Controllers & Validation
+
+- Réparation de l'ajout et de la création (URL bloquante HELPY)
+- Nouveaux validators
+- Service de mail fonctionnel, branché dans le IncidentController.php
+- Impossible de modifier un incident « en attente » vers « en cours » depuis l'édition (blocage API)
+- Amélioration des statuts (en attente)
+- AuthController.php API
+
+## Recherche & Filtres
+
+- Ajout des champs manquants sur la recherche simple
+- Ajout des champs poussés sur la date ouverture/clôture sur recherche avancée
+- Filtrage complet, archivage fonctionnel
+- Affichage archivé isolé
+
+## Système de Mailing
+
+- Ajout de la Diffusion list, triage par défaut sur la dernière création
+- Les listes créées sur des statuts d'incidents envoient les mails
+- Incident moyen = envoyer (si présente) mail à une liste définie
+- Case cochée pour activer / désactiver liste
+- Système de mailing complet, envoi sur création / modification incident sur TOUTE opération
+- Suivi total des états selon la gravité
+- Interrupteur ON/OFF sur une liste (pas besoin de la recréer)
+- Correction du template mail sur validated_at, suppression de colonne zombie
+- Ajout des listes pro et perso
+- Envoi de mail individuel, amélioration de typage
+- Envoi de mail automatiquement au rédacteur & intervenant
+- Ajout des sites dans le corps de mail
+- Liste de diffusion personnelle reliée au template back
+- Workflow des emails avec validation testée, email de rédacteur et manuel correctement intégré
+- Séparation de type d'email, workflow total
+
+## Templates & Vues
+
+- Template en blade.php complet + corbeille
+- Possibilité de refaire un template après suppression
+
+## Services & Logique Métier
+
+- Ajouts des services Action Template Présent
+- Logique métier services roles
+- Gestion des Roles
+- Métier & Utilisateur fonctionnel
+
+## Gestion des Données
+
+- Modifications des données des actions en TODO
+- Ajout de la corbeille, soft delete, force delete, restore delete
+- Nettoyage des données
+- Suppression des seeder & factories inutiles
+
+## Intégration Frontend
+
+- Branchement Angular propre
+- Correction des exports
+- Branchement date de modification
+
+## Authentification & Sécurité
+
+- Connexion totale au Middleware
+- Sécurisation du dashboard
+
+## Dashboard & Administration
+
+- Journal d'historique fonctionnel
+
+## Optimisations & Refactoring
+
+- Refactoring des noms
+- Création de dépôt Git, versioning
