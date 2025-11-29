@@ -1,0 +1,128 @@
+<!-- src/app/components/role-modal/role-modal.html -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🔒</span>
+        <h2 class="text-xl font-semibold">Gestion des droits : {{ role.label }}</h2>
+      </div>
+      <button (click)="closeModal()" class="text-white hover:text-gray-200 transition-colors">
+        <span class="text-2xl">×</span>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+      
+      <!-- Informations du rôle -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom du rôle</label>
+        <input type="text" [(ngModel)]="role.label" 
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 mb-2">Description</label>
+        <textarea [(ngModel)]="role.description" rows="2"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </textarea>
+      </div>
+
+      <!-- Statistiques -->
+      <div class="flex gap-4 mb-6">
+        <div class="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
+          <div class="text-green-600 dark:text-green-400 font-semibold">✓ {{ activeCount }} droits activés</div>
+        </div>
+        <div class="flex-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+          <div class="text-red-600 dark:text-red-400 font-semibold">✗ {{ inactiveCount }} droits désactivés</div>
+        </div>
+      </div>
+
+      <!-- Catégories de permissions -->
+      @for (category of permissionCategories; track category.name) {
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-3 pb-2 border-b dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <span>📌</span>
+              {{ category.name }}
+            </h3>
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+              {{ getCategoryActiveCount(category) }} / {{ category.permissions.length }} actifs
+            </span>
+          </div>
+
+          <div class="space-y-3">
+            @for (permission of category.permissions; track permission.key) {
+              <div class="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                [class.border]="permission.isLocked"
+                [class.border-gray-400]="permission.isLocked"
+                [class.dark:border-gray-500]="permission.isLocked">
+                
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <label class="font-medium text-gray-900 dark:text-gray-100">
+                      {{ permission.label }}
+                    </label>
+                    
+                    @if (permission.isLocked) {
+                      <span class="text-lg" [title]="permission.lockReason">🔒</span>
+                    }
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {{ permission.description }}
+                  </p>
+                  
+                  @if (permission.isLocked) {
+                    <div class="mt-2 text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                      ⚠️ {{ permission.lockReason }}
+                    </div>
+                  }
+                </div>
+
+                <!-- Toggle switch uniquement (pas de checkbox visible) -->
+                <div class="flex items-center"
+                  [class.cursor-not-allowed]="permission.isLocked"
+                  [class.opacity-60]="permission.isLocked">
+                  
+                  <button type="button"
+                    (click)="!permission.isLocked && togglePermission(permission)"
+                    [disabled]="permission.isLocked ?? false"
+                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    [class.bg-blue-600]="permission.value && !permission.isLocked"
+                    [class.bg-gray-200]="!permission.value && !permission.isLocked"
+                    [class.dark:bg-gray-600]="!permission.value && !permission.isLocked"
+                    [class.bg-gray-400]="permission.isLocked"
+                    role="switch"
+                    [attr.aria-checked]="permission.value">
+                    <span class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform"
+                      [class.translate-x-5]="permission.value"
+                      [class.translate-x-1]="!permission.value">
+                    </span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex items-center justify-between border-t dark:border-gray-600">
+      <button (click)="closeModal()" 
+        class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors dark:text-white">
+        Annuler
+      </button>
+      <button (click)="saveChanges()" 
+        [disabled]="saving"
+        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400">
+        @if (saving) {
+          <span>Enregistrement...</span>
+        } @else {
+          <span>Enregistrer les modifications</span>
+        }
+      </button>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,49 @@
+// src/styles.scss
+/* ===== STYLES.SCSS PRINCIPAL ===== */
+/* ===== IMPORTS MODULAIRES ===== */
+@use 'styles/variables';
+@use 'styles/dark-mode';
+@use 'styles/components';
+@use 'styles/quill-editor';
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== STYLES DE BASE UNIQUEMENT ===== */
+@layer base {
+  html, body {
+    background-color: rgb(var(--bg-secondary));
+    color: rgb(var(--text-primary));
+    transition: background-color 0.15s ease, color 0.15s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* Transitions automatiques pour tous les éléments */
+  * {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+  }
+}
+
+/* ===== STYLES PRINT ===== */
+@media print {
+  .dark {
+    --bg-primary: var(--color-white);
+    --bg-secondary: var(--color-white);
+    --text-primary: var(--color-black);
+    
+    * {
+      background-color: white !important;
+      color: black !important;
+    }
+  }
+}
+
+/* ===== PERFORMANCE ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

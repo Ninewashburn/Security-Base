@@ -1,0 +1,837 @@
+<!-- src/app/common/incident-form/incident-form.html -->
+@if (!isLoading) {
+<form [formGroup]="incidentForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+  <!-- Section 1: Informations de base -->
+  <div class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+      <h2 class="text-lg font-semibold text-gray-900">
+        📋 Fiche d'incident
+      </h2>
+      <div class="flex items-center space-x-4">
+        <span class="text-sm font-bold text-gray-700">Rédacteur :</span>
+        <span class="text-sm text-gray-900 font-medium">{{ connectedUser }}</span>
+      </div>
+    </div>
+
+    <!-- Section: Modèles prédéfinis -->
+    <div class="bg-white shadow-sm rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-gray-600 text-white rounded-full flex items-center justify-center text-lg">
+              📋
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">Modèle prédéfini</h3>
+              <p class="text-sm text-gray-600">
+                @if (isEditMode) {
+                Template utilisé pour la création de cet incident
+                } @else {
+                Sélectionnez un modèle pour pré-remplir automatiquement les actions à mener
+                }
+              </p>
+            </div>
+          </div>
+          <button type="button"
+            class="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center space-x-2"
+            (click)="openTemplateManagement()" title="Gérer les modèles">
+            <span>⚙</span>
+            <span>Gérer les modèles</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="px-6 py-4">
+        <div class="space-y-4">
+          <!-- Ligne horizontale : Sélection + Status -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
+            <!-- Colonne gauche : Sélection du template -->
+            <div>
+              <label for="template-select" class="block text-sm font-medium text-gray-700 mb-2">
+                @if (!isEditMode){
+                Objet prédéfini
+                }
+                @if (isEditMode) {
+                Attention le template ne peut pas être modifié après la création de l'incident
+                }
+              </label>
+              <select id="template-select" formControlName="template_id"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white h-11"
+                [class.bg-gray-100]="isEditMode" [class.cursor-not-allowed]="isEditMode"
+                (change)="onTemplateSelected($event)">
+                <option [ngValue]="null">Aucun modèle - Saisie manuelle</option>
+                @for (template of availableTemplates; track template.id) {
+                <option [value]="template.id">
+                  {{ template.nom_objet }}
+                  @if (template.actions_count) {
+                  ({{ template.actions_count }} actions)
+                  }
+                </option>
+                }
+              </select>
+
+            </div>
+
+            <!-- Colonne droite : Statut du template (même hauteur que le select) -->
+            @if (selectedTemplateId) {
+            <div class="bg-green-50 border border-green-200 rounded-lg px-4 py-2 h-11 flex items-center">
+              <div class="flex items-center space-x-2">
+                <span class="text-green-600 font-bold text-sm">✓</span>
+                <span class="font-medium text-green-800 text-sm">Modèle appliqué</span>
+                <span class="text-green-700 text-xs">- Actions pré-remplies</span>
+              </div>
+            </div>
+            }
+          </div>
+
+          <!-- Section emails du template (pleine largeur sous les deux colonnes) -->
+          @if (selectedTemplateId && templateDiffusionListEmails.length > 0) {
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-blue-600">📧</span>
+              <p class="text-sm font-medium text-blue-800">
+                Destinataires du template
+              </p>
+              <span class="text-xs text-blue-600">(cliquez sur ✕ pour retirer)</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              @for (email of templateDiffusionListEmails; track $index) {
+              <span class="flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full">
+                <span>{{ email }}</span>
+                <button (click)="removeTemplateEmail($index)" type="button"
+                  class="ml-2 text-blue-600 hover:text-blue-800">
+                  &times;
+                </button>
+              </span>
+              }
+            </div>
+          </div>
+          }
+
+          <!-- Cas template sans emails -->
+          @if (selectedTemplateId && templateDiffusionListEmails.length == 0) {
+          <div class="bg-orange-50 border-l-4 border-orange-400 py-2 px-3 rounded-r text-xs">
+            <div class="flex items-center space-x-1 mb-1">
+              <span class="text-orange-600">⚠️</span>
+              <span class="font-medium text-orange-800">Aucune liste de diffusion, ce template n'a pas de liste
+                personnalisée ou vous avez tout retiré.
+              </span>
+            </div>
+            <div class="text-blue-700">
+              <span class="font-medium">→</span> Ajoutez des emails dans "Personnes supplémentaires à notifier"
+            </div>
+          </div>
+          }
+
+          <!-- Message d'aide -->
+          @if (!isEditMode) {
+          <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <div class="text-xs text-gray-600 flex items-start space-x-2">
+              <span>💡</span>
+              <div>
+                <span class="font-semibold">Astuce :</span>
+                <span class="ml-1">
+                  Les modèles permettent de gagner du temps en pré-remplissant automatiquement
+                  les actions courantes pour des types d'incidents récurrents.
+                </span>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Séparateur avec plus d'espacement -->
+    <div class="relative py-4">
+      <div class="absolute inset-0 flex items-center px-6">
+        <div class="w-full border-t border-gray-200"></div>
+      </div>
+      <div class="relative flex justify-center">
+        <span class="bg-white px-3 text-xs text-gray-500 uppercase tracking-wider">
+          Informations de base
+        </span>
+      </div>
+    </div>
+
+    <div class="px-6 py-6 space-y-6">
+      <!-- Objet de l'incident + Météo sur la même ligne -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Objet - 2/3 de la largeur -->
+        <div class="lg:col-span-2">
+          <label for="object" class="block text-sm font-medium text-gray-700 mb-2">
+            Objet <span class="text-red-500">*</span>
+          </label>
+          <input type="text" id="object" formControlName="object"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
+            [class.border-red-500]="isFieldInvalid('object')" placeholder="Décrivez brièvement l'incident..." />
+          @if (isFieldInvalid('object')) {
+          <div class="mt-1 text-sm text-red-600">
+            {{ getFieldError('object') }}
+          </div>
+          }
+        </div>
+
+        <!-- Météo - 1/3 de la largeur -->
+        <div class="lg:col-span-1 flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 text-center mb-2 mt-7">
+            Déclencher un signalement dans la météo :
+          </label>
+          <div class="flex items-center justify-center space-x-6 mt-auto mb-1">
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="meteo" [value]="true" formControlName="meteo"
+                class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+              <span class="ml-2 text-sm text-gray-700">OUI</span>
+            </label>
+            <label class="flex items-center cursor-pointer">
+              <input type="radio" name="meteo" [value]="false" formControlName="meteo"
+                class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+              <span class="ml-2 text-sm text-gray-700">NON</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Caractéristiques principales -->
+      <div>
+        <h4 class="text-sm font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+          🔧 Caractéristiques de l'incident
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Gravité -->
+          <div>
+            <label for="gravity" class="block text-sm font-medium text-gray-700 mb-2">
+              Gravité <span class="text-red-500">*</span>
+            </label>
+            <select id="gravity" formControlName="gravity"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11">
+              <option value="">Sélectionner une gravité</option>
+              @for (option of gravityOptions; track option.value) {
+              <option [value]="option.value">
+                {{ option.label }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Statut -->
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+              Statut <span class="text-red-500">*</span>
+            </label>
+            <select id="status" formControlName="status"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11">
+              <option value="">Sélectionner un statut</option>
+              @for (option of statusOptions; track option.value) {
+              <option [value]="option.value">
+                {{ option.label }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Numéro de ticket -->
+          <div>
+            <label for="ticketNumber" class="block text-sm font-medium text-gray-700 mb-2">
+              N° Ticket
+            </label>
+            <input type="text" id="ticketNumber" formControlName="ticketNumber"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
+              [class.border-red-500]="isFieldInvalid('ticketNumber')" placeholder="UR837-I0323383" />
+            @if (isFieldInvalid('ticketNumber')) {
+            <div class="mt-1 text-sm text-red-600">
+              {{ getFieldError('ticketNumber') }}
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Dates et suivi -->
+      <div>
+        <h4 class="text-sm font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+          📅 Dates et suivi
+        </h4>
+        <div
+          [class]="incidentForm.get('status')?.value === 'cloture' ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'grid grid-cols-1 gap-6'">
+          <!-- Date d'ouverture -->
+          <div>
+            <label for="dateOuverture" class="block text-sm font-medium text-gray-700 mb-2">
+              Date de début
+            </label>
+            <input type="datetime-local" id="dateOuverture" formControlName="dateOuverture"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11" />
+          </div>
+
+          <!-- Date de clôture (conditionnelle) -->
+          @if (incidentForm.get('status')?.value === 'cloture') {
+          <div>
+            <label for="dateCloture" class="block text-sm font-medium text-gray-700 mb-2">
+              Date de clôture
+            </label>
+            <input type="datetime-local" id="dateCloture" formControlName="dateCloture"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
+              [class.border-red-500]="isFieldInvalid('dateCloture')" />
+            @if (isFieldInvalid('dateCloture')) {
+            <div class="mt-1 text-sm text-red-600">
+              {{ getFieldError('dateCloture') }}
+            </div>
+            }
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Section: Liens externes -->
+      <div>
+        <h4 class="text-sm font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+          🔗 Liens vers les outils de suivi
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Lien HELPY -->
+          <div>
+            <label for="lienTicketHelpy" class="block text-sm font-medium text-gray-700 mb-2">
+              Lien Ticket HELPY
+              <span class="text-xs text-gray-500">(optionnel)</span>
+            </label>
+            <input type="url" id="lienTicketHelpy" formControlName="lienTicketHelpy"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
+              placeholder="https://helpy.urssaf.recouv/ticket/12345" />
+
+            <!-- Message de validation -->
+            @if (incidentForm.get('lienTicketHelpy')?.invalid && incidentForm.get('lienTicketHelpy')?.touched) {
+            <div class="mt-1 text-sm text-red-600">
+              @if (incidentForm.get('lienTicketHelpy')?.errors?.['pattern']) {
+              <div>
+                Le lien doit être une URL valide (contenant 'helpy' ou '/ticket/')
+              </div>
+              }
+              @if (incidentForm.get('lienTicketHelpy')?.errors?.['url']) {
+              <div>
+                Veuillez saisir une URL valide
+              </div>
+              }
+            </div>
+            }
+
+            <!-- Prévisualisation du lien -->
+            @if (incidentForm.get('lienTicketHelpy')?.value && incidentForm.get('lienTicketHelpy')?.valid) {
+            <div class="mt-2 p-2 bg-blue-50 rounded-md">
+              <div class="flex items-center space-x-2 text-sm">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <a [href]="incidentForm.get('lienTicketHelpy')?.value" target="_blank" rel="noopener noreferrer"
+                  class="text-blue-600 hover:text-blue-800">
+                  Ouvrir le ticket HELPY
+                  <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+            }
+          </div>
+
+          <!-- Lien TANDEM -->
+          <div>
+            <label for="lienTicketTandem" class="block text-sm font-medium text-gray-700 mb-2">
+              Lien Ticket TANDEM
+              <span class="text-xs text-gray-500">(optionnel)</span>
+            </label>
+            <input type="url" id="lienTicketTandem" formControlName="lienTicketTandem"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
+              placeholder="https://tandem.urssaf.recouv/ticket/12345" />
+
+            <!-- Message de validation -->
+            @if (incidentForm.get('lienTicketTandem')?.invalid && incidentForm.get('lienTicketTandem')?.touched) {
+            <div class="mt-1 text-sm text-red-600">
+              @if (incidentForm.get('lienTicketTandem')?.errors?.['pattern']) {
+              <div>
+                Le lien doit être une URL valide (contenant 'tandem' ou '/ticket/')
+              </div>
+              }
+              @if (incidentForm.get('lienTicketTandem')?.errors?.['url']) {
+              <div>
+                Veuillez saisir une URL valide
+              </div>
+              }
+            </div>
+            }
+
+            <!-- Prévisualisation du lien -->
+            @if (incidentForm.get('lienTicketTandem')?.value && incidentForm.get('lienTicketTandem')?.valid) {
+            <div class="mt-2 p-2 bg-blue-50 rounded-md">
+              <div class="flex items-center space-x-2 text-sm">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <a [href]="incidentForm.get('lienTicketTandem')?.value" target="_blank" rel="noopener noreferrer"
+                  class="text-blue-600 hover:text-blue-800">
+                  Ouvrir le ticket TANDEM
+                  <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Domaines (multi-sélection) -->
+  <div class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900">
+          🎯 Domaine(s) <span class="text-red-500">*</span>
+        </h3>
+        <div class="space-x-2">
+          <button type="button" (click)="selectAllDomains()"
+            class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors">
+            Tous les domaines
+          </button>
+          <button type="button" (click)="clearAllDomains()"
+            class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+            Aucun
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        @for (domain of domainOptions; track domain.value) {
+        <div class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50"
+          [class.border-blue-500]="isDomainSelected(domain.value)" [class.bg-blue-50]="isDomainSelected(domain.value)"
+          [class.border-gray-200]="!isDomainSelected(domain.value)" (click)="toggleDomainSelection(domain.value)">
+          <input type="checkbox" [checked]="isDomainSelected(domain.value)"
+            class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" readonly />
+          <span class="ml-3 text-sm font-medium text-gray-700">{{ domain.label }}</span>
+        </div>
+        }
+      </div>
+      @if (isFieldInvalid('domains')) {
+      <div class="mt-2 text-sm text-red-600">
+        {{ getFieldError('domains') }}
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Section 3: Publics impactés -->
+  <div class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900">
+          👥 Public(s) impacté(s)
+        </h3>
+        <div class="space-x-2">
+          <button type="button" (click)="selectAllPublics()"
+            class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors">
+            Tous publics
+          </button>
+          <button type="button" (click)="clearAllPublics()"
+            class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+            Aucun
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        @for (publicType of publicOptions; track publicType.value) {
+        <div class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50"
+          [class.border-blue-500]="isPublicSelected(publicType.value)"
+          [class.bg-blue-50]="isPublicSelected(publicType.value)"
+          [class.border-gray-200]="!isPublicSelected(publicType.value)"
+          (click)="togglePublicSelection(publicType.value)">
+          <input type="checkbox" [checked]="isPublicSelected(publicType.value)"
+            class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" readonly />
+          <span class="ml-3 text-sm font-medium text-gray-700">{{ publicType.label }}</span>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Sites impactés -->
+  <div class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900">
+          🏢 Site(s) impacté(s)
+        </h3>
+        <div class="flex items-center space-x-6">
+          <div class="flex items-center space-x-3">
+            <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+              <input type="checkbox" formControlName="isNational"
+                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+              <span class="ml-2 text-sm text-gray-700 font-medium">📍 Impact National</span>
+            </label>
+            <p class="text-xs text-gray-600 whitespace-nowrap">
+              Cocher si l'incident a un impact au niveau national
+            </p>
+          </div>
+          <div class="border-l border-gray-300 h-8"></div>
+          <div class="flex space-x-2">
+            <button type="button" (click)="selectAllSites()"
+              class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors">
+              Toute la région
+            </button>
+            <button type="button" (click)="clearAllSites()"
+              class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+              Aucun
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        @for (siteImpacte of siteOptions; track siteImpacte.value) {
+        <div class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50"
+          [class.border-blue-500]="isSiteSelected(siteImpacte.value)"
+          [class.bg-blue-50]="isSiteSelected(siteImpacte.value)"
+          [class.border-gray-200]="!isSiteSelected(siteImpacte.value)" (click)="toggleSiteSelection(siteImpacte.value)">
+          <input type="checkbox" [checked]="isSiteSelected(siteImpacte.value)"
+            class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" readonly />
+          <span class="ml-3 text-sm font-medium text-gray-700">{{ siteImpacte.label }}</span>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 5: Description et actions -->
+  <div class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">
+        📝 Description et Actions
+      </h3>
+    </div>
+    <div class="px-6 py-6 space-y-6">
+      <div class="description-editor">
+        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+          Description de l'incident <span class="text-red-500">*</span>
+          <span class="ml-2 text-xs text-gray-500">({{ getWordCount('description') }} mots)</span>
+        </label>
+        <quill-editor formControlName="description" [modules]="quillConfig" [styles]="quillStylesDescription"
+          placeholder="Décrivez en détail l'incident, les symptômes observés, l'impact..."
+          [class.border-red-500]="isFieldInvalid('description')">
+        </quill-editor>
+        @if (isFieldInvalid('description')) {
+        <div class="mt-1 text-sm text-red-600">
+          {{ getFieldError('description') }}
+        </div>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Actions à mener -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 dark:bg-gray-800 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-blue-800 mb-4 dark:text-gray-200">
+            Actions à Mener
+            @if (incidentForm.get('status')?.value === 'en_cours') {
+            <span class="text-red-500 text-sm">*</span>
+            }
+          </h3>
+          <div formArrayName="actionsAMener" class="space-y-2">
+            @for (action of actionsAMener.controls; track $index) {
+            <div class="flex items-center gap-2 bg-white p-2 rounded-md border">
+              <button (click)="removeAction('actionsAMener', $index)" type="button"
+                class="p-1 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-full" title="Supprimer l'action">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              <input [formControlName]="$index" type="text"
+                class="flex-grow w-full border-0 focus:ring-0 bg-transparent"
+                placeholder="Décrivez l'action à réaliser...">
+              <button (click)="transferAction($index)" type="button"
+                class="p-2 text-red-600 hover:bg-red-100 rounded-full" title="Marquer comme menée">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            </div>
+            }
+          </div>
+          <input type="text" #newActionInput placeholder="Ajouter une nouvelle action et appuyer sur Entrée..."
+            (keydown.enter)="addAction(newActionInput, $event)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md mt-4"
+            [class.border-red-500]="isFieldInvalid('actionsAMener')">
+
+          <!-- Message d'aide conditionnel -->
+          @if (incidentForm.get('status')?.value === 'en_cours') {
+          <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
+            ⚠️ <strong>Incident en cours :</strong> Au moins une action à mener est requise.
+          </div>
+          } @else if (incidentForm.get('status')?.value === 'cloture') {
+          <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+            ✅ <strong>Incident cloturé :</strong> Les actions restantes peuvent être conservées pour traitement
+            ultérieur.
+          </div>
+          }
+
+          @if (isFieldInvalid('actionsAMener')) {
+          <div class="mt-2 text-sm text-red-600">
+            Au moins une action est requise lorsque l'incident est en cours.
+          </div>
+          }
+        </div>
+
+        <!-- Actions menées -->
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6 dark:bg-gray-800 dark:border-gray-700">
+          <h3 class="text-lg font-semibold text-green-800 mb-4 dark:text-gray-200">Actions Menées</h3>
+          @if (actionsMenees.controls.length > 0) {
+          <ul class="space-y-2">
+            @for (action of actionsMenees.controls; track $index) {
+            <li class="flex items-center gap-2 text-sm text-gray-700 bg-white p-2 rounded-md border">
+              <button (click)="untransferAction($index)" type="button"
+                class="p-2 text-orange-600 hover:bg-orange-100 rounded-full" title="Marquer comme non menée">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+              <span class="text-green-600">✓</span>
+              <span class="flex-grow">{{ action.value }}</span>
+              <button (click)="removeAction('actionsMenees', $index)" type="button"
+                class="p-1 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-full"
+                title="Supprimer l'action menée">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </li>
+            }
+          </ul>
+          } @else {
+          <p class="text-base text-gray-500 italic text-center py-8">Aucune action menée pour le moment.</p>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section temps d'indisponibilité du service -->
+  <div class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">
+        ⏱️ Temps d'indisponibilité du service
+      </h3>
+    </div>
+    <div class="px-6 py-6">
+      <p class="text-xs text-gray-500 mb-4">
+        Si le service a été indisponible, précisez la durée. Cela permet de générer des statistiques fiables.
+      </p>
+      <div class="space-y-4">
+
+        <!-- Ligne 1: Jours, Heures et Minutes -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          <div>
+            <label for="indisponibiliteJours" class="block text-sm font-medium text-gray-700 mb-2">
+              Jours
+            </label>
+            <input type="number" id="indisponibiliteJours" formControlName="indisponibiliteJours"
+              (keydown)="onKeyDown($event)"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Ex: 1 jour (nombre uniquement)" min="0" />
+          </div>
+
+          <div>
+            <label for="indisponibiliteHeures" class="block text-sm font-medium text-gray-700 mb-2">
+              Heures
+            </label>
+            <input type="number" id="indisponibiliteHeures" formControlName="indisponibiliteHeures"
+              (input)="onTimeInput($event, 'indisponibiliteHeures', 23)" (keydown)="onKeyDown($event)"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Ex: 1 heure (nombre uniquement)" min="0" max="23" />
+          </div>
+
+          <div>
+            <label for="indisponibiliteMinutes" class="block text-sm font-medium text-gray-700 mb-2">
+              Minutes
+            </label>
+            <input type="number" id="indisponibiliteMinutes" formControlName="indisponibiliteMinutes"
+              (input)="onTimeInput($event, 'indisponibiliteMinutes', 59)" (keydown)="onKeyDown($event)"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Ex: 5 minutes (nombre uniquement)" min="0" max="59" />
+          </div>
+        </div>
+
+        <!-- Ligne 2: Contexte en pleine largeur -->
+        <div>
+          <label for="indisponibiliteContexte" class="block text-sm font-medium text-gray-700 mb-2">
+            Contexte (optionnel)
+          </label>
+          <textarea id="indisponibiliteContexte" formControlName="indisponibiliteContexte"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            rows="2" placeholder="Ex: Coupure courant survenue Lundi de 14h30 à 16h15"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Personnes à notifier (mailAlerte comme FormArray) -->
+  <div class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">
+        📧 Personnes supplémentaires à notifier <span class="text-sm text-gray-600">(Utilisez des adresses &#64;urssaf.fr uniquement)</span>
+      </h3>
+    </div>
+    <div class="px-6 py-6">
+      <p class="text-sm text-gray-600 mb-4">
+        Ajoutez ici les adresses email des personnes qui doivent être tenues informées de cet incident, en plus des
+        listes de diffusion standards.
+      </p>
+
+      <!-- Affichage des emails ajoutés -->
+      @if (mailAlerte.controls.length > 0) {
+      <div class="flex flex-wrap gap-4 mb-3">
+        @for (emailControl of mailAlerte.controls; track $index) {
+        <div class="flex flex-col">
+          <div
+            class="flex items-center text-sm font-medium px-3 py-1 rounded-full"
+            [ngClass]="{
+              'bg-blue-100 text-blue-800': emailControl.valid,
+              'bg-red-100 text-red-800': emailControl.invalid
+            }"
+          >
+            <span>{{ emailControl.value }}</span>
+            <button (click)="removeEmail($index)" type="button" class="ml-2" 
+              [ngClass]="{
+                'text-blue-600 hover:text-blue-800': emailControl.valid,
+                'text-red-600 hover:text-red-800': emailControl.invalid
+              }">
+              &times;
+            </button>
+          </div>
+          @if (emailControl.invalid && (emailControl.dirty || emailControl.touched)) {
+            <div class="mt-1 text-xs text-red-600">
+              @if (emailControl.hasError('urssafEmail')) {
+                L'email doit se terminer par &#64;urssaf.fr
+              } @else if (emailControl.hasError('email')) {
+                Format d'email invalide.
+              }
+            </div>
+          }
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Champ de saisie -->
+      <div>
+        <label for="new-email-input" class="sr-only">Ajouter un email</label>
+        <input type="email" id="new-email-input" [formControl]="newEmailControl" (keydown.enter)="addEmail($event)"
+          placeholder="email@urssaf.fr (appuyez sur Entrée pour ajouter)"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          [class.border-red-500]="newEmailControl.invalid && newEmailControl.touched">
+        @if (newEmailControl.invalid && newEmailControl.touched) {
+        <div class="mt-1 text-sm text-red-600">
+          @if (newEmailControl.hasError('email')) {
+          Format d'email invalide.
+          } @else if (newEmailControl.hasError('urssafEmail')) {
+          L'email doit se terminer par &#64;urssaf.fr
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Actions du formulaire avec progression -->
+  <div class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-6">
+
+      <!-- Barre de progression -->
+      <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-gray-700">Progression du formulaire</span>
+          <span class="text-sm font-semibold text-gray-900">{{ formProgress }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" [style.width.%]="formProgress">
+          </div>
+        </div>
+
+        <!-- Indicateurs de validation -->
+        <div class="mt-3 text-xs">
+          @if (!isFormValid) {
+          @let missing = getMissingFields();
+          <div class="text-orange-600 flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"></path>
+            </svg>
+            Champs obligatoires manquants
+            @if (missing.length > 0) {
+            <span class="font-medium ml-1">({{ missing.join(', ') }})</span>
+            }
+          </div>
+          } @else {
+          <div class="text-green-600 flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clip-rule="evenodd"></path>
+            </svg>
+            Formulaire prêt pour soumission
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="flex items-center justify-between">
+        <div>
+          <!-- Bouton de soumission avec validation centralisée -->
+          <button type="submit" [disabled]="!canSubmit"
+            class="px-6 py-3 font-medium rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            [class]="canSubmit 
+                           ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'" [class.animate-pulse]="isSubmitting">
+            @if (!isSubmitting) {
+            <span class="flex items-center">
+              💾 {{ isEditMode ? 'Enregistrer les modifications' : "Créer l'incident" }}
+            </span>
+            } @else {
+            <span class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              {{ isEditMode ? 'Mise à jour en cours...' : 'Création en cours...' }}
+            </span>
+            }
+          </button>
+        </div>
+
+        <div>
+          <button type="button" (click)="onCancel()" [disabled]="isSubmitting"
+            class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 transition-all">
+            ❌ Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</form>
+<app-incident-template-modal #templateModal (modalClosed)="onTemplateModalClosed()"></app-incident-template-modal>
+}

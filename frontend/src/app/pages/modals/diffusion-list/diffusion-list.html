@@ -1,0 +1,495 @@
+<!-- src/app/pages/modals/diffusion-list/diffusion-list.html -->
+
+<!-- Modal Backdrop -->
+@if (isVisible) {
+<div class="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+
+  <!-- Conteneur centré avec position stable -->
+  <div class="min-h-full flex items-start justify-center p-4 pt-8">
+
+    <!-- Modal Content - Plus compact -->
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl min-h-[80vh] max-h-[90vh] flex flex-col relative"
+      (click)="$event.stopPropagation()">
+
+      <!-- Header intégré avec tous les contrôles -->
+      <div class="px-4 py-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+        <!-- Layout en grille stable -->
+        <div class="grid grid-cols-12 items-center gap-3">
+
+          <!-- Titre fixe -->
+          <div class="col-span-2">
+            <h2 class="text-xl font-semibold text-gray-900 whitespace-nowrap">Listes de Diffusion</h2>
+          </div>
+
+          <!-- Recherche + Filtre type -->
+          <div class="col-span-2 space-y-1">
+            <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)"
+              class="w-full border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="🔎 Rechercher..." />
+
+            <select [(ngModel)]="typeFilter" (ngModelChange)="onTypeFilterChange($event)"
+              class="w-full border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500">
+              <option value="all">📋 Toutes les listes</option>
+              <option value="metier">🏢 Listes métier</option>
+              <option value="personnelle">👤 Listes personnalisée</option>
+            </select>
+          </div>
+
+          <!-- Zone de tri avec largeur fixe -->
+          <div class="col-span-5 flex items-center justify-start gap-2">
+            <span class="text-sm text-gray-600 whitespace-nowrap">Trier :</span>
+
+            <button type="button" (click)="sortByName()"
+              class="px-2 py-1 text-xs border rounded transition-colors whitespace-nowrap"
+              [class.bg-blue-100]="sortState.currentSort === 'name'"
+              [class.border-blue-300]="sortState.currentSort === 'name'"
+              [class.text-blue-700]="sortState.currentSort === 'name'"
+              [class.bg-gray-50]="sortState.currentSort !== 'name'"
+              [class.border-gray-300]="sortState.currentSort !== 'name'"
+              [class.text-gray-600]="sortState.currentSort !== 'name'"
+              [class.hover:bg-gray-100]="sortState.currentSort !== 'name'">
+              <strong>📝 NOM</strong> {{ sortState.nameDirection === 'desc' ? 'Z-A' : 'A-Z' }}
+            </button>
+
+            <button type="button" (click)="sortByCreationDate()"
+              class="px-2 py-1 text-xs border rounded transition-colors whitespace-nowrap"
+              [class.bg-blue-100]="sortState.currentSort === 'date'"
+              [class.border-blue-300]="sortState.currentSort === 'date'"
+              [class.text-blue-700]="sortState.currentSort === 'date'"
+              [class.bg-gray-50]="sortState.currentSort !== 'date'"
+              [class.border-gray-300]="sortState.currentSort !== 'date'"
+              [class.text-gray-600]="sortState.currentSort !== 'date'"
+              [class.hover:bg-gray-100]="sortState.currentSort !== 'date'">
+              <strong>📅 DATE : </strong>{{ sortState.dateDirection === 'desc' ? 'Récent' : 'Ancien' }}
+            </button>
+
+            <button type="button" (click)="sortByGravity()"
+              class="px-2 py-1 text-xs border rounded transition-colors whitespace-nowrap"
+              [class.bg-blue-100]="sortState.currentSort === 'gravity'"
+              [class.border-blue-300]="sortState.currentSort === 'gravity'"
+              [class.text-blue-700]="sortState.currentSort === 'gravity'"
+              [class.bg-gray-50]="sortState.currentSort !== 'gravity'"
+              [class.border-gray-300]="sortState.currentSort !== 'gravity'"
+              [class.text-gray-600]="sortState.currentSort !== 'gravity'"
+              [class.hover:bg-gray-100]="sortState.currentSort !== 'gravity'">
+              <strong>⚠️ GRAVITÉ : </strong>{{ sortState.gravityDirection === 'desc' ? 'Grave' : 'Faible' }}
+            </button>
+
+            <!-- Espace fixe pour le bouton Reset -->
+            <div class="w-12">
+              @if (sortState.currentSort !== 'default') {
+              <button type="button" (click)="resetSort()"
+                class="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 border border-gray-300 rounded hover:bg-gray-100 transition-colors"
+                title="Remettre l'ordre par défaut">
+                Reset
+              </button>
+              }
+            </div>
+          </div>
+
+          <!-- Actions à droite -->
+          <div class="col-span-3 flex items-center justify-end gap-3">
+            <!-- Compteur -->
+            <span class="text-sm text-gray-600 whitespace-nowrap">
+              <strong>📄 Liste(s) :</strong> {{ filteredRules.length }}/{{ currentRules.length }}
+            </span>
+
+            <!-- Bouton d'ajout avec menu déroulant -->
+            <div class="relative">
+              <button type="button" (click)="toggleAddMenu()" [disabled]="isLoading"
+                class="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-colors whitespace-nowrap flex items-center gap-1">
+                + Nouvelle Liste
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+
+              <!-- Menu déroulant -->
+              @if (showAddMenu) {
+              <div class="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10 border">
+                <div class="py-1">
+                  <button (click)="addNewRule('metier')"
+                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    🏢 Liste métier
+                    <span class="block text-xs text-gray-500">Avec gravité, domaines, sites</span>
+                  </button>
+                  <button (click)="addNewRule('personnelle')"
+                    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    👤 Liste personnalisée
+                    <span class="block text-xs text-gray-500">Libre, uniquement emails</span>
+                  </button>
+                </div>
+              </div>
+              }
+            </div>
+
+            <!-- Bouton fermer -->
+            <button (click)="closeModal()"
+              class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded hover:bg-gray-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      @if (isLoading) {
+      <div class="flex-grow flex items-center justify-center">
+        <div class="text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p class="text-gray-500 mt-2">Chargement...</p>
+        </div>
+      </div>
+      } @else {
+
+      <!-- Content -->
+      <div class="flex-grow overflow-y-auto p-4">
+        <div class="space-y-3">
+
+          <!-- Section dédiée pour la liste des validateurs -->
+          @if (validatorList) {
+          <div class="border-2 border-yellow-400 bg-yellow-50 rounded-lg p-4">
+            <div class="grid grid-cols-12 gap-4">
+              <!-- Informations fixes -->
+              <div class="col-span-5 space-y-2">
+                <h3 class="text-lg font-bold text-gray-900">🔒 Liste des Validateurs </h3>
+                <h5 class="font-bold text-gray-700">(Utilisez des adresses &#64;urssaf uniquement)</h5>
+                <p class="text-sm text-gray-600">
+                  Cette liste est utilisée pour notifier les responsables lors de la création d'incidents graves ou très
+                  graves.
+                  Elle est toujours active et ne peut pas être supprimée.
+                </p>
+
+              </div>
+
+              <!-- Gestion des emails -->
+              <div class="col-span-7">
+                <label class="block text-xs font-medium text-gray-700 mb-1">
+                  Emails des validateurs ({{ validatorList.emails.length || 0 }})
+                </label>
+
+                @if (validatorList.emails && validatorList.emails.length > 0) {
+                <div class="mb-1 space-y-1 max-h-32 overflow-y-auto">
+                  @for (email of validatorList.emails; track trackByEmail($index, email); let emailIndex = $index) {
+                  <div
+                    class="flex items-center justify-between bg-white px-2 py-0.5 rounded text-xs border border-gray-200">
+                    <span class="text-gray-800 truncate">{{ email }}</span>
+                    <button type="button" (click)="removeEmailFromValidatorList(emailIndex)"
+                      class="text-gray-400 hover:text-red-500 ml-1 flex-shrink-0">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                      </svg>
+                    </button>
+                  </div>
+                  }
+                </div>
+                }
+
+                <input type="email" (keydown)="addEmailToValidatorList($event)"
+                  class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500"
+                  placeholder="nouveau.validateur@urssaf.fr (Entrée)" />
+              </div>
+            </div>
+          </div>
+          }
+
+          @for (rule of filteredRules; track trackByRuleId($index, rule); let i = $index) {
+
+          <!-- Card compacte pour chaque règle -->
+          <div class="border border-gray-200 rounded-lg p-4 transition-all duration-200"
+            [class.border-blue-300]="rule.isNew" [class.bg-blue-50]="rule.isNew" [class.border-red-300]="rule.isDeleted"
+            [class.bg-red-50]="rule.isDeleted" [class.opacity-60]="rule.isDeleted">
+
+            @if (rule.isDeleted) {
+            <!-- Mode suppression compact -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-red-600 text-lg">🗑️</span>
+                <div>
+                  <p class="font-medium text-gray-900">{{ rule.name }}</p>
+                  <p class="text-sm text-gray-500">Sera supprimée</p>
+                </div>
+              </div>
+              <button (click)="undoDeleteRule(rule)"
+                class="px-3 py-1 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50">
+                Restaurer
+              </button>
+            </div>
+            } @else {
+
+            <!-- Layout en 2 lignes principales -->
+            <div class="space-y-4">
+
+              <!-- Ligne 1: Informations principales -->
+              <div class="grid grid-cols-12 gap-4 items-start">
+
+                <!-- Nom + Type + Gravité conditionnelle -->
+                <div [class]="rule.type === 'personnelle' ? 'col-span-8' : 'col-span-5'" class="space-y-2">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Nom de la liste</label>
+                    <input type="text" [value]="rule.name" (input)="updateRuleName(rule, $any($event.target).value)"
+                      class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
+                      placeholder="Nom de la liste..." />
+                  </div>
+
+                  <!-- Type de liste (lecture seule avec badge) -->
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label class="block text-xs font-medium text-gray-700">Type de liste</label>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full"
+                        [class.bg-blue-100]="rule.type === 'metier'" [class.text-blue-800]="rule.type === 'metier'"
+                        [class.bg-purple-100]="rule.type === 'personnelle'"
+                        [class.text-purple-800]="rule.type === 'personnelle'">
+                        {{ rule.type === 'metier' ? '🏢 Métier' : '👤 Personnalisée' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Gravité OU Configuration libre -->
+                  <div>
+                    @if (rule.type === 'metier') {
+                    <!-- Gravité pour listes métier -->
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Gravité</label>
+                    <div class="flex items-center gap-2">
+                      <select [(ngModel)]="rule.gravite" (ngModelChange)="updateRuleGravity(rule, $event)"
+                        class="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500">
+                        @for (g of gravityOptions; track g.value) {
+                        <option [value]="g.value">{{ g.label }}</option>
+                        }
+                      </select>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap"
+                        [class]="rule.gravite && gravityConfig[rule.gravite] ? gravityConfig[rule.gravite].colorClass : 'bg-gray-100 text-gray-800'">
+                        {{ rule.gravite && gravityConfig[rule.gravite] ? gravityConfig[rule.gravite].label : 'Non
+                        défini' }}
+                      </span>
+                    </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Domaines concernés - UNIQUEMENT pour listes métier -->
+                @if (rule.type === 'metier') {
+                <div class="col-span-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-2">Domaines concernés</label>
+                  <div class="space-y-4">
+                    @for (domain of domainOptions; track domain.value) {
+                    <label class="flex items-center gap-1 text-xs cursor-pointer">
+                      <input type="checkbox" [checked]="rule.domains?.includes(domain.value)"
+                        (change)="onDomainChange(rule, domain.value, $event)"
+                        class="h-3 w-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                      <span class="select-none" [class.font-medium]="rule.domains?.includes(domain.value)"
+                        [class.text-blue-700]="rule.domains?.includes(domain.value)">
+                        {{ domain.label }}
+                      </span>
+                    </label>
+                    }
+                  </div>
+                </div>
+                }
+
+                <!-- Options + Actions (largeur adaptative) -->
+                <div [class]="rule.type === 'personnelle' ? 'col-span-4' : 'col-span-4'" class="space-y-2">
+                  <!-- Options en ligne -->
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <label class="flex items-center gap-1 text-xs cursor-pointer">
+                        <input type="checkbox" [checked]="rule.actif"
+                          (change)="updateRuleActif(rule, $any($event.target).checked)"
+                          class="h-3 w-3 text-blue-600 border-gray-300 rounded">
+                        <span>Actif</span>
+                      </label>
+
+                      <!-- Auto - UNIQUEMENT pour listes métier -->
+                      @if (rule.type === 'metier') {
+                      <label class="flex items-center gap-1 text-xs cursor-pointer">
+                        <input type="checkbox" [checked]="rule.auto_include_service_users"
+                          (change)="updateRuleAutoInclude(rule, $any($event.target).checked)"
+                          class="h-3 w-3 text-blue-600 border-gray-300 rounded">
+                        <span>Ajouter liste métier</span>
+                      </label>
+                      }
+                    </div>
+
+                    <button type="button" (click)="deleteRule(rule)"
+                      class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded" title="Supprimer">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Emails compacts -->
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                      Emails ({{ rule.emails.length || 0 }})
+                    </label>
+
+                    @if (rule.emails && rule.emails.length > 0) {
+                    <div class="mb-1 space-y-1 max-h-20 overflow-y-auto">
+                      @for (email of rule.emails; track trackByEmail($index, email); let emailIndex = $index) {
+                      <div class="flex items-center justify-between bg-gray-50 px-2 py-0.5 rounded text-xs">
+                        <span class="text-gray-800 truncate">{{ email }}</span>
+                        <button type="button" (click)="removeEmailFromRule(rule, emailIndex)"
+                          class="text-gray-400 hover:text-red-500 ml-1 flex-shrink-0">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        </button>
+                      </div>
+                      }
+                    </div>
+                    }
+
+                    <!-- Input ajout email -->
+                    <input type="email" (keydown)="addEmailToRule(rule, $event)"
+                      class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500"
+                      placeholder="email@urssaf.fr (Entrée)" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ligne 2: Sites - UNIQUEMENT pour listes métier -->
+              @if ((rule.type || 'metier') === 'metier') {
+              <div class="border-t border-gray-200 pt-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 mb-2 flex items-center gap-1">
+                    🏛️ Sites
+                  </label>
+                  <div class="border border-gray-200 rounded-md p-3 bg-gray-50/30">
+                    <div class="grid grid-cols-3 gap-x-6">
+                      <!-- Column 1 -->
+                      <div class="space-y-2">
+                        @for (site of column1Sites; track site.value) {
+                        <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <input type="checkbox" [checked]="rule.sites?.includes(site.value)"
+                            (change)="onSiteChange(rule, site.value, $event)"
+                            class="h-3.5 w-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                          <span class="select-none truncate" [class.font-medium]="rule.sites?.includes(site.value)">
+                            {{ site.label }}
+                          </span>
+                        </label>
+                        }
+                      </div>
+                      <!-- Column 2 -->
+                      <div class="space-y-2">
+                        @for (site of column2Sites; track site.value) {
+                        <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <input type="checkbox" [checked]="rule.sites?.includes(site.value)"
+                            (change)="onSiteChange(rule, site.value, $event)"
+                            class="h-3.5 w-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                          <span class="select-none truncate" [class.font-medium]="rule.sites?.includes(site.value)">
+                            {{ site.label }}
+                          </span>
+                        </label>
+                        }
+                      </div>
+                      <!-- Column 3 -->
+                      <div class="space-y-2">
+                        @for (site of column3Sites; track site.value) {
+                        <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <input type="checkbox" [checked]="rule.sites?.includes(site.value)"
+                            (change)="onSiteChange(rule, site.value, $event)"
+                            class="h-3.5 w-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                          <span class="select-none truncate" [class.font-medium]="rule.sites?.includes(site.value)">
+                            {{ site.label }}
+                          </span>
+                        </label>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              }
+
+            </div>
+            }
+          </div>
+          }
+
+          <!-- Message si aucune liste -->
+          @if (filteredRules.length === 0 && !isLoading) {
+          <div class="text-center py-12">
+            <div class="w-12 h-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
+              <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                </path>
+              </svg>
+            </div>
+            @if (searchTerm || typeFilter !== 'all') {
+            <div>
+              <h3 class="text-lg font-medium text-gray-900">Aucune liste trouvée</h3>
+              <p class="text-gray-500">
+                @if (searchTerm && typeFilter !== 'all') {
+                Aucune liste {{ typeFilter === 'metier' ? 'métier' : 'personnalisée' }} ne correspond à "{{ searchTerm
+                }}"
+                } @else if (searchTerm) {
+                Aucune liste ne correspond à "{{ searchTerm }}"
+                } @else {
+                Aucune liste {{ typeFilter === 'metier' ? 'métier' : 'personnalisée' }} visible
+                }
+              </p>
+              <button type="button" (click)="clearFilters()"
+                class="mt-2 px-3 py-1 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50">
+                Voir toutes les listes
+              </button>
+            </div>
+            } @else {
+            <div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune liste visible</h3>
+              <p class="text-gray-500 mb-4">Vous pouvez créer votre première liste personnelle</p>
+              <button type="button" (click)="addNewRule('personnelle')"
+                class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded hover:bg-purple-700">
+                👤 Créer une liste personnalisée
+              </button>
+            </div>
+            }
+          </div>
+          }
+        </div>
+      </div>
+      }
+
+      <!-- Footer compact -->
+      <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div>
+            @if (hasChanges) {
+            <div class="flex items-center gap-2 text-amber-600">
+              <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+              <span class="text-sm">Modifications non sauvegardées</span>
+            </div>
+            } @else {
+            <span class="text-sm text-gray-500">Tout est sauvegardé</span>
+            }
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button type="button" (click)="closeModal()" [disabled]="isLoading"
+              class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50">
+              Fermer
+            </button>
+
+            <button type="button" (click)="saveChanges()" [disabled]="!hasChanges || isLoading"
+              class="px-6 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50">
+              @if (isLoading) {
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
+              Sauvegarde...
+              } @else {
+              Sauvegarder
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}

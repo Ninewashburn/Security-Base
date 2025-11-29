@@ -1,0 +1,46 @@
+<!-- src/app/pages/incident-create/incident-create.html (nettoyé) -->
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header simple avec barre de progression à droite -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <!-- Bouton retour rapide -->
+            <button type="button" (click)="quickReturn()"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Retour à la liste
+            </button>
+            <div class="border-l border-gray-300 pl-4">
+              <h1 class="text-2xl font-bold text-gray-900">
+                📝 RAPPORT D'INCIDENT
+              </h1>
+              <p class="mt-1 text-sm text-gray-600">
+                Créer un nouveau rapport d'incident de sécurité
+              </p>
+            </div>
+          </div>
+          @if (incidentFormRef) {
+          <div class="text-right">
+            <div class="text-sm text-gray-600 mb-1">
+              Progression : {{ incidentFormRef.formProgress }}%
+            </div>
+            <div class="w-32 bg-gray-200 rounded-full h-2">
+              <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                [style.width.%]="incidentFormRef.formProgress">
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <app-incident-form [initialIncident]="undefined" (save)="onSave($event)" (cancel)="onCancel()"
+      (initialized)="onIncidentFormInitialized()" #incidentFormRef>
+    </app-incident-form>
+  </div>
+</div>

@@ -1,0 +1,587 @@
+// src/styles/_dark-mode.scss
+/* ========================================================================
+   DARK MODE - THÈME SOMBRE POUR L'APPLICATION SÉCURITÉ
+   ======================================================================== */
+
+.dark {
+
+  /* ===== 1. VARIABLES CSS PERSONNALISÉES ===== */
+  
+  /* --- Palette d'arrière-plans --- */
+  --bg-primary: var(--color-gray-800);      /* Fond principal des conteneurs */
+  --bg-secondary: var(--color-gray-900);    /* Fond de page (plus sombre) */
+  --bg-tertiary: var(--color-gray-700);     /* Fond éléments interactifs */
+  --bg-surface: var(--color-gray-600);      /* Surface pour tableaux */
+  --bg-elevated: var(--color-gray-750);     /* Fond pour éléments surélevés */
+
+  /* --- Palette de textes --- */
+  --text-primary: var(--color-gray-100);    /* Texte principal (très lisible) */
+  --text-secondary: var(--color-gray-300);  /* Texte secondaire (labels) */
+  --text-tertiary: var(--color-gray-500);   /* Texte tertiaire (placeholders) */
+  --text-muted: var(--color-gray-400);      /* Texte très discret */
+
+  /* --- Bordures et séparateurs --- */
+  --border-primary: var(--color-gray-600);
+  --border-secondary: var(--color-gray-500);
+  --border-focus: var(--color-blue-500);
+  --border-hover: var(--color-blue-400);
+
+  /* --- Couleurs d'accent --- */
+  --accent-blue-primary: var(--color-blue-400);
+  --accent-blue-secondary: var(--color-blue-300);
+  --accent-success: var(--color-green-500);
+  --accent-warning: var(--color-yellow-500);
+  --accent-error: var(--color-red-500);
+
+
+  /* ===== 2. STRUCTURE ET LAYOUT DE BASE ===== */
+  
+  /* --- Fondation de l'application --- */
+  body {
+    background-color: rgb(var(--bg-secondary)) !important;
+    color: rgb(var(--text-primary)) !important;
+  }
+
+  /* --- Conteneurs principaux --- */
+  .container,
+  .main,
+  main,
+  .content,
+  .card,
+  .section,
+  .panel,
+  .widget,
+  .mat-card,
+  .mat-card-header,
+  .card-header {
+    background-color: rgb(var(--bg-primary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+  }
+
+  /* --- Navigation et en-têtes --- */
+  nav,
+  .navbar,
+  header {
+    background-color: rgb(var(--bg-primary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-bottom: 1px solid rgb(var(--border-primary)) !important;
+
+    /* Liens de navigation */
+    a {
+      color: rgb(var(--text-secondary)) !important;
+
+      &:hover,
+      &.active {
+        color: rgb(var(--text-primary)) !important;
+      }
+    }
+  }
+
+
+  /* ===== 3. COMPOSANTS DE DONNÉES (TABLEAUX) ===== */
+  
+  /* --- Tableaux complets --- */
+  table {
+    background-color: rgb(var(--bg-surface)) !important;
+    color: rgb(var(--text-primary)) !important;
+
+    /* En-têtes de colonnes */
+    thead th {
+      background-color: rgb(var(--bg-tertiary)) !important;
+      color: rgb(var(--text-secondary)) !important;
+      border-bottom: 1px solid rgb(var(--border-primary)) !important;
+    }
+
+    /* Corps du tableau avec interactions */
+    tbody tr {
+      background-color: rgb(var(--bg-primary)) !important;
+      border-bottom: 1px solid rgb(var(--border-primary)) !important;
+      color: rgb(var(--text-primary)) !important;
+
+      /* Cellules individuelles */
+      td {
+        color: rgb(var(--text-primary)) !important;
+
+        /* Liens dans les cellules */
+        a {
+          color: rgb(var(--accent-blue-primary)) !important;
+
+          &:hover {
+            color: rgb(var(--accent-blue-secondary)) !important;
+          }
+        }
+      }
+
+      /* États visuels du tableau */
+      &:nth-child(even) {
+        background-color: rgb(var(--bg-tertiary)) !important;
+      }
+
+      &:hover {
+        background-color: rgb(var(--border-primary)) !important;
+      }
+    }
+  }
+
+
+  /* ===== 4. FORMULAIRES ET ÉLÉMENTS INTERACTIFS ===== */
+  
+  /* --- Labels de formulaires (génériques) --- */
+  label {
+    color: rgb(var(--text-primary)) !important;
+    cursor: pointer !important;
+    
+    /* États hover */
+    &:hover {
+      color: rgb(var(--text-secondary)) !important;
+    }
+
+    /* Contenu texte des labels */
+    span {
+      color: inherit !important;
+    }
+    
+    /* Labels requis */
+    &[required]:after,
+    &.required:after {
+      color: rgb(var(--accent-error)) !important;
+    }
+  }
+
+  /* --- Labels spécialisés avec layout flex --- */
+  label.checkbox-label,
+  label.radio-label,
+  .form-group label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  /* --- Champs de saisie unifiés --- */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    background-color: rgb(var(--bg-tertiary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+
+    /* Placeholders */
+    &::placeholder {
+      color: rgb(var(--text-tertiary)) !important;
+      opacity: 0.8;
+    }
+
+    /* État focus */
+    &:focus {
+      border-color: rgb(var(--border-focus)) !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+      outline: none !important;
+    }
+
+    /* État hover */
+    &:hover:not(:focus):not(:disabled) {
+      border-color: rgb(var(--border-hover)) !important;
+    }
+
+    /* États d'erreur et de succès */
+    &.error,
+    &:invalid {
+      border-color: rgb(var(--accent-error)) !important;
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2) !important;
+    }
+
+    &.success,
+    &:valid {
+      border-color: rgb(var(--accent-success)) !important;
+    }
+
+    /* État désactivé */
+    &:disabled {
+      background-color: rgb(var(--bg-surface)) !important;
+      color: rgb(var(--text-muted)) !important;
+      opacity: 0.6;
+      cursor: not-allowed !important;
+    }
+  }
+
+  /* --- Cases à cocher personnalisées --- */
+  input[type="checkbox"] {
+    appearance: none !important;
+    background-color: rgb(var(--bg-tertiary)) !important;
+    border: 2px solid rgb(var(--border-primary)) !important;
+    border-radius: 4px !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    position: relative !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+
+    /* État coché */
+    &:checked {
+      background-color: rgb(var(--color-blue-600)) !important;
+      border-color: rgb(var(--color-blue-600)) !important;
+      background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e") !important;
+      background-size: 12px 12px !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+    }
+
+    /* État indéterminé */
+    &:indeterminate {
+      background-color: rgb(var(--color-blue-600)) !important;
+      border-color: rgb(var(--color-blue-600)) !important;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e") !important;
+      background-size: 12px 12px !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+    }
+
+    /* États focus, hover et disabled */
+    &:focus {
+      outline: 2px solid rgb(var(--border-focus)) !important;
+      outline-offset: 2px !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: rgb(var(--border-hover)) !important;
+      background-color: rgba(59, 130, 246, 0.05) !important;
+    }
+
+    &:disabled {
+      background-color: rgb(var(--bg-surface)) !important;
+      border-color: rgb(var(--text-muted)) !important;
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+    }
+  }
+
+  /* --- Boutons radio personnalisés --- */
+  input[type="radio"] {
+    appearance: none !important;
+    background-color: rgb(var(--bg-tertiary)) !important;
+    border: 2px solid rgb(var(--border-primary)) !important;
+    border-radius: 50% !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    position: relative !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+
+    /* État sélectionné */
+    &:checked {
+      background-color: rgb(var(--color-blue-600)) !important;
+      border-color: rgb(var(--color-blue-600)) !important;
+      background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e") !important;
+      background-size: 8px 8px !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+    }
+
+    /* États focus, hover et disabled */
+    &:focus {
+      outline: 2px solid rgb(var(--border-focus)) !important;
+      outline-offset: 2px !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+
+    &:hover:not(:disabled) {
+      border-color: rgb(var(--border-hover)) !important;
+      background-color: rgba(59, 130, 246, 0.05) !important;
+    }
+
+    &:disabled {
+      background-color: rgb(var(--bg-surface)) !important;
+      border-color: rgb(var(--text-muted)) !important;
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+    }
+  }
+
+  /* --- Tailles spécifiques Tailwind pour checkbox/radio --- */
+  .h-4.w-4[type="checkbox"],
+  .h-4.w-4[type="radio"] {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  .h-5.w-5[type="checkbox"],
+  .h-5.w-5[type="radio"] {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+
+  /* --- Conteneurs de sélection multi-choix --- */
+  .border-2.rounded-lg,
+  .multi-select-item {
+    background-color: rgb(var(--bg-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    transition: all 0.2s ease !important;
+
+    /* État hover */
+    &:hover {
+      background-color: rgb(var(--bg-tertiary)) !important;
+      border-color: rgb(var(--border-hover)) !important;
+    }
+
+    /* État sélectionné */
+    &.border-blue-500,
+    &.bg-blue-50,
+    &.selected {
+      background-color: rgba(59, 130, 246, 0.15) !important;
+      border-color: rgb(var(--color-blue-500)) !important;
+      color: rgb(var(--text-primary)) !important;
+    }
+
+    /* État focus */
+    &:focus,
+    &:focus-within {
+      border-color: rgb(var(--border-focus)) !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    }
+  }
+
+
+  /* ===== 5. SYSTÈME DE BOUTONS ===== */
+  
+  /* --- Boutons neutres (sans couleur spécifique) --- */
+  button:not([class*="bg-"]):not([class*="text-"]) {
+    background-color: rgb(var(--bg-tertiary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+    transition: all 0.2s ease !important;
+
+    &:hover:not(:disabled) {
+      background-color: rgb(var(--border-primary)) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    &:active {
+      transform: translateY(0) !important;
+    }
+
+    &:disabled {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+    }
+  }
+
+  /* --- Boutons gris (adaptation autorisée) --- */
+  button[class*="bg-gray"] {
+    background-color: rgb(var(--bg-tertiary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+
+    &:hover:not(:disabled) {
+      background-color: rgb(var(--border-primary)) !important;
+    }
+  }
+
+  /* --- Cas spécial : Bouton "Astuces" (bg-blue-50) --- */
+  button[class*="bg-blue-50"] {
+    background-color: rgb(var(--bg-tertiary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+
+    &:hover {
+      background-color: rgb(var(--border-primary)) !important;
+    }
+
+    /* Icônes et texte internes */
+    svg,
+    span {
+      color: rgb(var(--text-primary)) !important;
+    }
+  }
+
+
+  /* ===== 6. ADAPTATIONS TAILWIND CSS ===== */
+  
+  /* --- Hiérarchie des textes gris --- */
+  .text-gray-900,
+  .text-gray-800,
+  .text-gray-700 {
+    color: rgb(var(--text-primary)) !important;
+  }
+
+  .text-gray-600,
+  .text-gray-500 {
+    color: rgb(var(--text-secondary)) !important;
+  }
+
+  .text-gray-400 {
+    color: rgb(var(--text-tertiary)) !important;
+  }
+
+  .text-gray-300 {
+    color: rgb(var(--text-muted)) !important;
+  }
+
+  /* --- Arrière-plans gris standardisés --- */
+  .bg-gray-50 {
+    background-color: rgb(var(--bg-secondary)) !important;
+  }
+
+  .bg-gray-100 {
+    background-color: rgb(var(--bg-tertiary)) !important;
+  }
+
+  .bg-gray-200 {
+    background-color: rgb(var(--bg-surface)) !important;
+  }
+
+  .bg-gray-800 {
+    background-color: rgb(var(--bg-surface)) !important;
+  }
+
+  .bg-gray-900 {
+    background-color: rgb(var(--bg-primary)) !important;
+  }
+
+  /* --- Arrière-plans blancs (avec protection des éléments colorés) --- */
+  .bg-white:not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-blue"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-purple"]):not([class*="bg-sky"]) {
+    background-color: rgb(var(--bg-primary)) !important;
+    color: rgb(var(--text-primary)) !important;
+  }
+
+  /* --- Texte général avec exclusions pour préserver les couleurs sémantiques --- */
+    div:not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-blue"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-purple"]):not([class*="bg-sky"]):not([class*="text-orange"]):not([class*="text-green"]):not([class*="text-red"]):not([class*="text-blue"]):not([class*="text-yellow"]):not([class*="text-purple"]),
+  small:not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-blue"]):not([class*="bg-yellow"]):not([class*="bg-orange"]):not([class*="bg-purple"]):not([class*="bg-sky"]):not([class*="text-orange"]):not([class*="text-green"]):not([class*="text-red"]):not([class*="text-blue"]):not([class*="text-yellow"]):not([class*="text-purple"]) {
+    color: rgb(var(--text-primary)) !important;
+  }
+
+
+  /* ===== 7. COMPOSANTS UI AVANCÉS ===== */
+  
+  /* --- Modals et overlays --- */
+  .modal,
+  .overlay,
+  .backdrop {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+  }
+
+  .modal-content,
+  .dialog {
+    background-color: rgb(var(--bg-primary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+  }
+
+  /* --- Dropdowns et menus contextuels --- */
+  .dropdown,
+  .menu,
+  .popover {
+    background-color: rgb(var(--bg-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+
+    .dropdown-item,
+    .menu-item {
+      color: rgb(var(--text-primary)) !important;
+
+      &:hover {
+        background-color: rgb(var(--bg-tertiary)) !important;
+      }
+
+      &.active {
+        background-color: rgba(59, 130, 246, 0.15) !important;
+        color: rgb(var(--text-primary)) !important;
+      }
+    }
+  }
+
+  /* --- Tooltips --- */
+  .tooltip {
+    background-color: rgb(var(--bg-surface)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border: 1px solid rgb(var(--border-primary)) !important;
+  }
+
+  /* --- Messages et alertes sans couleur spécifique --- */
+  .alert:not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-blue"]):not([class*="bg-yellow"]),
+  .notification:not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-blue"]):not([class*="bg-yellow"]) {
+    background-color: rgb(var(--bg-tertiary)) !important;
+    color: rgb(var(--text-primary)) !important;
+    border-color: rgb(var(--border-primary)) !important;
+  }
+
+
+  /* ===== 8. ANIMATIONS ET TRANSITIONS ===== */
+  
+  /* --- Transitions fluides pour tous les éléments interactifs --- */
+  input,
+  select,
+  textarea,
+  button,
+  [role="button"],
+  .clickable {
+    transition: all 0.2s ease !important;
+  }
+
+  /* --- Animations de focus globales --- */
+  *:focus {
+    outline: 2px solid rgb(var(--border-focus)) !important;
+    outline-offset: 2px !important;
+  }
+
+
+  /* ===== 9. ZONES DE SUGGESTIONS (SPÉCIALISÉES) ===== */
+  
+  /* --- Configuration spécifique pour les suggestions colorées --- */
+  .suggestions-zone {
+    /* Actions menées (vert) */
+    &.actions-menees {
+      background-color: rgba(34, 197, 94, 0.15) !important; /* Vert adapté dark mode */
+      border-color: #22c55e !important; /* Vert plus visible */
+      
+      .suggestions-title,
+      .suggestion-item {
+        color: #22c55e !important; /* Vert clair lisible sur fond sombre */
+        font-size: 0.8rem !important;
+        
+        &:hover {
+          background-color: rgba(34, 197, 94, 0.2) !important;
+          color: #16a34a !important;
+        }
+      }
+    }
+    
+    /* Actions à mener (bleu) */
+    &.actions-a-mener {
+      background-color: rgba(59, 130, 246, 0.15) !important; /* Bleu adapté dark mode */
+      border-color: #3b82f6 !important; /* Bleu plus visible */
+      
+      .suggestions-title,
+      .suggestion-item {
+        color: #60a5fa !important; /* Bleu clair lisible sur fond sombre */
+        font-size: 0.8rem !important;
+        
+        &:hover {
+          background-color: rgba(59, 130, 246, 0.2) !important;
+          color: #3b82f6 !important;
+        }
+      }
+    }
+
+    /* --- Configuration générale pour toutes les zones de suggestions --- */
+    .suggestions-title {
+      font-weight: 600 !important;
+      font-size: rem !important; /* Titre légèrement plus grand */
+    }
+    
+    .suggestion-item {
+      transition: all 0.2s ease !important;
+      cursor: pointer !important;
+      padding: 0.1rem !important; /* Padding augmenté pour plus de confort */
+      
+      &:active {
+        transform: scale(0.95) !important;
+      }
+    }
+  }
+}
+/* ========================================================================
+   FIN DU THÈME SOMBRE
+   ======================================================================== */

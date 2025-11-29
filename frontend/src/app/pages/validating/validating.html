@@ -1,0 +1,78 @@
+<div class="bg-gray-50 dark:bg-gray-900 flex items-start justify-center py-20">
+  <div class="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+    <!-- Spinner animé -->
+    <div class="flex justify-center mb-6">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+    </div>
+    <!-- Titre -->
+    <h2 class="text-2xl font-semibold text-center text-gray-800 dark:text-gray-100 mb-2">
+      Authentification en cours...
+    </h2>
+    <!-- Sous-titre -->
+    <p class="text-center text-gray-600 dark:text-gray-400 mb-8">
+      Finalisation de votre connexion...
+    </p>
+    <!-- Étapes de validation -->
+    <div class="space-y-4">
+      <!-- Étape 1 -->
+      <div class="flex items-center space-x-3" [class.opacity-50]="currentStep < 1">
+        <div class="flex-shrink-0">
+          @if (currentStep > 1) {
+          <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          } @else if (currentStep === 1) {
+          <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          } @else {
+          <div class="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 rounded-full"></div>
+          }
+        </div>
+        <span class="text-sm text-gray-700 dark:text-gray-300">Validation du token</span>
+      </div>
+      <!-- Étape 2 -->
+      <div class="flex items-center space-x-3" [class.opacity-50]="currentStep < 2">
+        <div class="flex-shrink-0">
+          @if (currentStep > 2) {
+          <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          } @else if (currentStep === 2) {
+          <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          } @else {
+          <div class="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 rounded-full"></div>
+          }
+        </div>
+        <span class="text-sm text-gray-700 dark:text-gray-300">Récupération des permissions</span>
+      </div>
+      <!-- Étape 3 -->
+      <div class="flex items-center space-x-3" [class.opacity-50]="currentStep < 3">
+        <div class="flex-shrink-0">
+          @if (currentStep > 3) {
+          <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          } @else if (currentStep === 3) {
+          <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          } @else {
+          <div class="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 rounded-full"></div>
+          }
+        </div>
+        <span class="text-sm text-gray-700 dark:text-gray-300">Finalisation de la connexion</span>
+      </div>
+    </div>
+    <!-- Message d'erreur si échec -->
+    @if (hasError) {
+    <div class="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <p class="text-sm text-red-800 dark:text-red-200 text-center">
+        {{ errorMessage }}
+      </p>
+    </div>
+    }
+  </div>
+</div>

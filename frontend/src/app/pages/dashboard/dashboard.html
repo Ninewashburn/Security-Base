@@ -1,0 +1,415 @@
+<!-- src/app/pages/dashboard/dashboard.html -->
+<div class="p-8">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <button (click)="goBack()"
+                    class="flex items-center justify-center w-10 h-10 bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                    <span class="text-xl">←</span>
+                </button>
+                <h1 class="text-2xl font-semibold text-gray-800">Administration</h1>
+            </div>
+
+            <div class="flex gap-3">
+                <!-- Bouton Gestion des rôles métiers -->
+                @if (canAccessMetierRoles()) {
+                <button (click)="openMetierRoleModal()"
+                    class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <span>📋</span>
+                    <span>Associer métiers aux rôles</span>
+                </button>
+                }
+
+                <!-- Bouton Exporter les droits -->
+                @if (canExportRights()) {
+                <button (click)="exportToExcel()"
+                    class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <span>📤</span>
+                    <span>Exporter les droits</span>
+                </button>
+                }
+            </div>
+        </div>
+
+        <!-- Barre de recherche -->
+        <div class="mb-6">
+            <input type="text" [(ngModel)]="searchTerm" (input)="filterData()" placeholder="Rechercher..."
+                class="w-full px-4 py-3 bg-white rounded-lg shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Onglets -->
+        <div class="bg-white rounded-lg shadow-sm mb-6">
+            <div class="flex border-b">
+                @for (tab of tabs; track tab.id) {
+                <button (click)="activeTab = tab.id" [class.border-b-2]="activeTab === tab.id"
+                    [class.border-blue-600]="activeTab === tab.id" [class.text-blue-600]="activeTab === tab.id"
+                    [class.text-gray-600]="activeTab !== tab.id"
+                    class="px-6 py-4 font-medium hover:text-blue-600 transition-colors">
+                    {{ tab.label }}
+                </button>
+                }
+            </div>
+        </div>
+
+        <!-- Contenu des onglets -->
+        <!-- ONGLET DROITS (Rôles) -->
+        @if (activeTab === 'droits') {
+        <div class="space-y-3">
+            @for (role of filteredRoles; track role.id) {
+            <div
+                class="flex items-center bg-white rounded-lg border shadow-sm px-6 py-4 hover:shadow transition-shadow">
+                <!-- Colonne 1 : Titre + Description (largeur fixe) -->
+                <div class="w-64 flex-shrink-0">
+                    <h3 class="text-blue-700 font-semibold text-base mb-1">{{ role.label }}</h3>
+                    <p class="text-xs text-gray-500 leading-tight">{{ role.description }}</p>
+                </div>
+
+                <!-- Colonne 2 : Compteur + Barre de progression (flex-grow pour occuper l'espace) -->
+                <div class="flex-1 flex items-center gap-4 mx-6">
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm text-gray-700 font-medium">
+                                {{ getActivePermissionsCount(role) }} / {{ getTotalPermissionsCount() }} droits activés
+                            </span>
+                            <span [class]="getPercentageColor(getPermissionPercentage(role))" class="text-sm font-bold">
+
+                                {{ getPermissionPercentage(role) }}%
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div [style.width.%]="getPermissionPercentage(role)"
+                                [class]="getProgressBarColor(getPermissionPercentage(role))"
+                                class="h-2 rounded-full transition-all duration-300">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonne 3 : Bouton Modifier (largeur fixe) -->
+                <div class="w-32 flex-shrink-0 flex justify-end">
+                    <button (click)="openRoleModal(role)"
+                        class="px-4 py-2 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 border border-blue-200 transition-colors text-sm font-medium flex items-center gap-2">
+                        <span>✏️</span>
+                        <span>Modifier</span>
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+        }
+
+        <!-- ONGLET MÉTIERS -->
+        @if (activeTab === 'metiers') {
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <!-- Message de chargement -->
+            @if (isLoadingMetiers) {
+            <div class="p-8 text-center text-gray-500">
+                <div
+                    class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent">
+                </div>
+                <p class="mt-2">Chargement des métiers...</p>
+            </div>
+            }
+
+            <!-- Message d'erreur -->
+            @if (metiersError) {
+            <div class="p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+                <p>{{ metiersError }}</p>
+                <button (click)="loadMetiers(true)" class="mt-2 px-3 py-1 bg-red-100 hover:bg-red-200 rounded text-sm">
+                    Réessayer
+                </button>
+            </div>
+            }
+
+            <!-- Contenu normal -->
+            @if (!isLoadingMetiers && !metiersError) {
+            <!-- Filtres + Compteur -->
+            <div class="p-4 border-b flex justify-between items-center">
+
+                <div class="flex gap-2 flex-wrap">
+                    <button (click)="metierFilter = 'all'; filterData()" [class.bg-blue-600]="metierFilter === 'all'"
+                        [class.text-white]="metierFilter === 'all'" [class.bg-gray-100]="metierFilter !== 'all'"
+                        class="px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors text-sm flex flex-col items-center">
+                        <span class="font-semibold">Tous les métiers</span>
+                        <span class="text-xs">({{ metiers.length }})</span>
+                    </button>
+                    @for (role of displayRoles; track role.id) {
+                    <button (click)="metierFilter = role.code; filterData()"
+                        [class.bg-blue-600]="metierFilter === role.code" [class.text-white]="metierFilter === role.code"
+                        [class.bg-gray-100]="metierFilter !== role.code"
+                        class="px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors text-sm flex flex-col items-center">
+                        <span class="font-semibold">{{ role.label }}</span>
+                        <span class="text-xs">({{ countMetiersByRole(role.code) }})</span>
+                    </button>
+                    }
+                    <!-- Filtre pour les métiers sans rôle -->
+                    <button (click)="metierFilter = 'none'; filterData()" [class.bg-blue-600]="metierFilter === 'none'"
+                        [class.text-white]="metierFilter === 'none'" [class.bg-gray-100]="metierFilter !== 'none'"
+                        class="px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors text-sm flex flex-col items-center">
+                        <span class="font-semibold">Aucun droit</span>
+                        <span class="text-xs">({{ countMetiersByRole('none') }})</span>
+                    </button>
+                </div>
+                <button (click)="loadMetiers(true)"
+                    class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                    title="Recharger les métiers">
+                    🔄 Actualiser
+                </button>
+            </div>
+
+            <!-- Tableau -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Métier </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Code Région</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Droit Associé</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @for (metier of paginatedMetiers; track metier.num_metier) {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ metier.num_metier }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">{{ metier?.nom_metier }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ metier.code_region }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if (metier.role) {
+                                <span
+                                    class="inline-flex px-3 py-1 rounded-full text-sm font-medium {{ getRoleBadgeClass(metier.role.code) }}">
+                                    {{ metier.role.label }}
+                                </span>
+                                } @else {
+                                <span
+                                    class="inline-flex px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+                                    Aucun
+                                </span>
+                                }
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                Aucun métier trouvé
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination pour les métiers -->
+            @if (metiersPagination.totalPages > 1) {
+            <div
+                class="p-4 border-t flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <div class="text-sm text-gray-700">
+                        {{ getMetiersPaginationInfo() }}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select (change)="changeMetierPageSize($event)" [value]="metiersPagination.pageSize"
+                            class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 bg-white text-gray-900">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="text-sm text-gray-600">par page</span>
+                    </div>
+                </div>
+
+                <div class="pagination flex items-center space-x-1">
+                    <button (click)="goToMetierPage(metiersPagination.currentPage - 1)"
+                        [disabled]="metiersPagination.currentPage === 1"
+                        class="px-3 py-2 text-sm border rounded-md transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        ← Précédent
+                    </button>
+                    @for (page of getVisibleMetierPages(); track $index) {
+                    <button (click)="page > 0 ? goToMetierPage(page) : null" [disabled]="page === -1"
+                        class="px-3 py-2 text-sm border rounded-md transition-colors min-w-[40px] text-center"
+                        [class.bg-blue-600]="page === metiersPagination.currentPage"
+                        [class.text-white]="page === metiersPagination.currentPage"
+                        [class.border-blue-600]="page === metiersPagination.currentPage"
+                        [class.bg-white]="page !== metiersPagination.currentPage && page > 0"
+                        [class.text-gray-700]="page !== metiersPagination.currentPage && page > 0"
+                        [class.border-gray-300]="page !== metiersPagination.currentPage && page > 0"
+                        [class.hover:bg-gray-50]="page !== metiersPagination.currentPage && page > 0"
+                        [class.text-gray-400]="page === -1" [class.cursor-default]="page === -1">
+                        {{ page === -1 ? '...' : page }}
+                    </button>
+                    }
+                    <button (click)="goToMetierPage(metiersPagination.currentPage + 1)"
+                        [disabled]="metiersPagination.currentPage >= metiersPagination.totalPages"
+                        class="px-3 py-2 text-sm border rounded-md transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Suivant →
+                    </button>
+                </div>
+            </div>
+            }
+            }
+        </div>
+        }
+
+        <!-- Affichage du rôle dans l'onglet Utilisateurs -->
+
+        <!-- ONGLET UTILISATEURS -->
+        @if (activeTab === 'utilisateurs') {
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+
+            <!-- Filtres par rôle avec compteur "Aucun" -->
+            <div class="p-4 border-b flex justify-between items-center">
+                <div class="flex gap-2 flex-wrap">
+                    <button (click)="userRoleFilter = 'all'; filterData()"
+                        [class.bg-blue-600]="userRoleFilter === 'all'" [class.text-white]="userRoleFilter === 'all'"
+                        [class.bg-gray-100]="userRoleFilter !== 'all'"
+                        class="px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors text-sm flex flex-col items-center">
+                        <span class="font-semibold">Tous les utilisateurs</span>
+                        <span class="text-xs">({{ users.length }})</span>
+                    </button>
+
+                    <!-- Filtres pour chaque rôle -->
+                    @for (role of displayRoles; track role.id) {
+                    <button (click)="userRoleFilter = role.code; filterData()"
+                        [class.bg-blue-600]="userRoleFilter === role.code"
+                        [class.text-white]="userRoleFilter === role.code"
+                        [class.bg-gray-100]="userRoleFilter !== role.code"
+                        class="px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors text-sm flex flex-col items-center">
+                        <span class="font-semibold">{{ role.label }}</span>
+                        <span class="text-xs">({{ countUsersByRole(role.code) }})</span>
+                    </button>
+                    }
+
+                    <!-- Filtre "Aucun rôle" -->
+                    <button (click)="userRoleFilter = 'none'; filterData()"
+                        [class.bg-blue-600]="userRoleFilter === 'none'" [class.text-white]="userRoleFilter === 'none'"
+                        [class.bg-gray-100]="userRoleFilter !== 'none'"
+                        class="px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors text-sm flex flex-col items-center">
+                        <span class="font-semibold">Aucun rôle</span>
+                        <span class="text-xs">({{ usersWithoutRoleCount }})</span>
+                    </button>
+                </div>
+                <button (click)="loadUsers()"
+                    class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                    title="Recharger les utilisateurs">
+                    🔄 Actualiser
+                </button>
+            </div>
+
+            <!-- Tableau -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nom</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Identifiant</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Métier</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Rôle</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @for (user of paginatedUsers; track user.login) {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                {{ user.full_name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ user.login }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                {{ user.metier?.nom_metier || 'Non trouvé' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- Gérer le cas role_code === null -->
+                                @if (user.role_code) {
+                                <span [class]="getRoleBadgeClass(user.role_code)"
+                                    class="inline-flex px-3 py-1 rounded-full text-sm font-medium">
+                                    {{ user.role_label }}
+                                </span>
+                                } @else {
+                                <span
+                                    class="inline-flex px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+                                    Aucun rôle
+                                </span>
+                                }
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination pour les utilisateurs -->
+            @if (usersPagination.totalPages > 1) {
+            <div
+                class="p-4 border-t flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <div class="text-sm text-gray-700">
+                        {{ getUsersPaginationInfo() }}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select (change)="changeUserPageSize($event)" [value]="usersPagination.pageSize"
+                            class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 bg-white text-gray-900">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="text-sm text-gray-600">par page</span>
+                    </div>
+                </div>
+
+                <div class="pagination flex items-center space-x-1">
+                    <button (click)="goToUserPage(usersPagination.currentPage - 1)"
+                        [disabled]="usersPagination.currentPage === 1"
+                        class="px-3 py-2 text-sm border rounded-md transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        ← Précédent
+                    </button>
+                    @for (page of getVisibleUserPages(); track $index) {
+                    <button (click)="page > 0 ? goToUserPage(page) : null" [disabled]="page === -1"
+                        class="px-3 py-2 text-sm border rounded-md transition-colors min-w-[40px] text-center"
+                        [class.bg-blue-600]="page === usersPagination.currentPage"
+                        [class.text-white]="page === usersPagination.currentPage"
+                        [class.border-blue-600]="page === usersPagination.currentPage"
+                        [class.bg-white]="page !== usersPagination.currentPage && page > 0"
+                        [class.text-gray-700]="page !== usersPagination.currentPage && page > 0"
+                        [class.border-gray-300]="page !== usersPagination.currentPage && page > 0"
+                        [class.hover:bg-gray-50]="page !== usersPagination.currentPage && page > 0"
+                        [class.text-gray-400]="page === -1" [class.cursor-default]="page === -1">
+                        {{ page === -1 ? '...' : page }}
+                    </button>
+                    }
+                    <button (click)="goToUserPage(usersPagination.currentPage + 1)"
+                        [disabled]="usersPagination.currentPage >= usersPagination.totalPages"
+                        class="px-3 py-2 text-sm border rounded-md transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Suivant →
+                    </button>
+                </div>
+            </div>
+            }
+
+        </div>
+        }
+
+    </div>
+</div>
+
+<!-- Modal de modification des rôles -->
+@if (showRoleModal && selectedRole) {
+<app-role-modal [role]="selectedRole" (close)="closeRoleModal()" (save)="saveRole($event)">
+</app-role-modal>
+}
+
+@if (showMetierRoleModal) {
+<app-metier-role-modal (close)="closeMetierRoleModal()" (saved)="onMetierRoleModalSaved()">
+</app-metier-role-modal>
+}

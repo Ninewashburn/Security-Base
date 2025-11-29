@@ -1,0 +1,537 @@
+<!-- src/app/pages/incident-detail/incident-detail.html -->
+
+<div class="max-w-6xl mx-auto p-6 bg-white min-h-screen">
+
+  <!-- État de chargement -->
+  @if (isLoading) {
+  <div class="text-center py-16">
+    <div class="flex flex-col items-center space-y-4">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <p class="text-lg text-gray-600">Chargement de l'incident...</p>
+    </div>
+  </div>
+  }
+
+  <!-- Erreur de chargement -->
+  @if (!isLoading && !incident) {
+  <div class="text-center py-16">
+    <div class="flex flex-col items-center space-y-4">
+      <div class="text-red-500 text-6xl">⚠️</div>
+      <h2 class="text-xl font-semibold text-gray-900">Incident non trouvé</h2>
+      <p class="text-gray-600">L'incident avec l'ID {{ incidentId }} n'existe pas.</p>
+      <button (click)="goList()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        Retour à la liste
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- Contenu principal si incident trouvé -->
+  @if (incident) {
+  <!-- Header avec actions -->
+  <div class="flex justify-between items-start mb-6 border-b border-gray-200 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">
+        Incident #{{ incident.id }}
+      </h1>
+      <h2 class="text-lg text-gray-700">{{ incident.object }}</h2>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="flex gap-3">
+      <button (click)="goList()"
+        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Retour
+      </button>
+
+      @if (permissionService.canValidateIncidents() && needsValidation()) {
+      <button (click)="validateIncident()"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Valider
+      </button>
+      }
+
+      @if(permissionService.canModifyIncident()) {
+      <button (click)="editIncident()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        Modifier
+      </button>
+      }
+
+      @if(permissionService.canExportData()) {
+      <button (click)="exportToPDF()"
+        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Export PDF
+      </button>
+      }
+    </div>
+  </div>
+
+  <!-- Système d'onglets -->
+  @if (permissionService.canViewHistory()) {
+  <div class="mb-6">
+    <div class="border-b border-gray-200">
+      <nav class="flex space-x-8">
+        <button (click)="setActiveTab('details')" [class]="activeTab === 'details' 
+            ? 'border-blue-600 text-blue-600 font-medium' 
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+          class="py-4 px-1 border-b-2 transition-colors flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Détails de l'incident
+        </button>
+
+        <button (click)="setActiveTab('history')" [class]="activeTab === 'history' 
+            ? 'border-blue-600 text-blue-600 font-medium' 
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+          class="py-4 px-1 border-b-2 transition-colors flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Journal des modifications
+        </button>
+      </nav>
+    </div>
+  </div>
+  }
+
+  <!-- CONTENU DES ONGLETS -->
+
+  <!-- Onglet "Détails" (tout ton contenu existant) -->
+  @if (!permissionService.canViewHistory() || activeTab === 'details') {
+  <div class="tab-content-details">
+
+    <!-- Section 1: Informations principales -->
+    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+      <div class="flex items-center justify-between w-full mb-4 border-b border-gray-300 pb-4">
+        <h3 class="text-lg font-semibold text-gray-900">
+          Informations principales
+        </h3>
+        <div class="flex items-center space-x-10">
+          <div>
+            <span class="text-sm font-bold text-gray-700">Statut : </span>
+            <span [class]="'px-3 py-1 rounded-full text-sm font-medium ' + statusConfig[incident.status].colorClass">
+              {{ statusConfig[incident.status].label }}
+            </span>
+          </div>
+          <div>
+            <span class="text-sm font-bold text-gray-700">Gravité : </span>
+            <span
+              [class]="'px-3 py-1 rounded-full text-sm font-medium ' + (incident.gravity ? gravityConfig[incident.gravity].colorClass : '')">
+              {{ gravityConfig[incident.gravity].label }}
+            </span>
+          </div>
+          <div>
+            <span class="text-sm font-bold text-gray-700">Météo :</span>
+            <span class="text-gray-900 ml-1">{{ getMeteoDisplay() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIGNE 1: Date d'ouverture, Date de clôture, Domaines -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date d'ouverture</label>
+          <p class="text-gray-900">{{ incidentDisplayService.formatDateTime(incident.dateOuverture) }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date de clôture</label>
+          <p class="text-gray-900">{{ incidentDisplayService.formatDateTime(incident.dateCloture) }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Domaines</label>
+          <p class="text-gray-900">{{ getDomainsDisplay() }}</p>
+        </div>
+      </div>
+
+      <!-- LIGNE 2: Publics impactés, Sites impactés, National -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Publics impactés</label>
+          <p class="text-gray-900">{{ getPublicsDisplay() }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Sites impactés</label>
+          <p class="text-gray-900">{{ getSitesDisplay() }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">National</label>
+          <p class="text-gray-900">{{ getNationalDisplay() || 'Non' }}</p>
+        </div>
+      </div>
+
+      <!-- LIGNE 3: N° Ticket, Lien HELPY, Rédacteur -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">N° Ticket</label>
+          <p class="text-gray-900 font-mono">{{ incident.ticketNumber || 'Non assigné' }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Lien HELPY</label>
+          @if (incident.lienTicketHelpy) {
+          <a [href]="incident.lienTicketHelpy" target="_blank" rel="noopener noreferrer"
+            class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors">
+            <svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            <span class="truncate">{{ incident.lienTicketHelpy | slice:8:45 }}{{ incident.lienTicketHelpy.length > 45
+              ? '...' : '' }}</span>
+          </a>
+          } @else {
+          <p class="text-gray-900">Non renseigné</p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rédacteur</label>
+          <p class="text-gray-900">{{ incident.creator?.full_name }}</p>
+        </div>
+      </div>
+
+      <!-- LIGNE 4: À faire, Lien TANDEM, Intervenant -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">À faire</label>
+          @if (incident.has_pending_actions) {
+          <span>Oui</span>
+          } @else {
+          <p class="text-gray-900">Non</p>
+          }
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Lien TANDEM</label>
+          @if (incident.lienTicketTandem) {
+          <a [href]="incident.lienTicketTandem" target="_blank" rel="noopener noreferrer"
+            class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors">
+            <svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            <span class="truncate">{{ incident.lienTicketTandem | slice:8:45 }}{{ incident.lienTicketTandem.length > 45
+              ? '...' : '' }}</span>
+          </a>
+          } @else {
+          <p class="text-gray-900">Non renseigné</p>
+          }
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Intervenant</label>
+          <p class="text-gray-900">{{ incident.assignee?.full_name || '-' }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Section 2: Description détaillée -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2">
+        Description de l'incident
+      </h3>
+      <div class="prose max-w-none">
+        <div class="ql-container ql-snow" style="border: none;">
+          <div class="ql-editor text-gray-700 leading-relaxed" style="padding: 0;" [innerHTML]="getDescriptionHtml()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Actions menées et à mener -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Actions à mener -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Actions à Mener
+        </h3>
+        <div class="prose max-w-none">
+          <div class="ql-container ql-snow" style="border: none;">
+            <div class="ql-editor text-blue-700 leading-relaxed" style="padding: 0;"
+              [innerHTML]="getActionsAMenerHtml()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions menées -->
+      <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-green-800 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Actions Menées
+        </h3>
+        <div class="prose max-w-none">
+          <div class="ql-container ql-snow" style="border: none;">
+            <div class="ql-editor text-green-700 leading-relaxed" style="padding: 0;"
+              [innerHTML]="getActionsMeneesHtml()">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Informations complémentaires -->
+    <div class="space-y-6">
+      <!-- Temps d'indisponibilité -->
+      @if (incident.tempsIndisponibilite) {
+      <div class="bg-orange-50 border border-orange-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-orange-800 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Temps d'indisponibilité du service
+        </h3>
+        <div class="ql-container ql-snow" style="border: none;">
+          <div class="ql-editor text-orange-700 leading-relaxed" style="padding: 0;"
+            [innerHTML]="getTempsIndisponibiliteHtml()"></div>
+        </div>
+      </div>
+      }
+
+      <!-- Destinataires des notifications -->
+      <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">Destinataires des Notifications</h3>
+                <p class="text-sm text-gray-600">Emails automatiques et personnalisés pour cet incident</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-4 text-sm">
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span class="text-gray-700 font-medium">{{ getAutomaticEmailsCount() }} automatique(s)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span class="text-gray-700 font-medium">{{ getManualEmailsCount() }} manuel(s)</span>
+              </div>
+              <div class="text-gray-500">|</div>
+              <span class="font-bold text-gray-900">{{ getNotifiedEmails().length }} total</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-6 py-5">
+          @if (hasNotifiedEmails()) {
+          <div class="flex space-x-6">
+            <div class="flex-1 min-w-0">
+              @if (getAutomaticEmails().length > 0 && getManualEmails().length > 0) {
+              <div class="flex gap-6">
+                <div class="flex-1 min-w-0">
+                  @let automaticEmails = getAutomaticEmails();
+                  <div class="space-y-3">
+                    <div class="flex items-center space-x-2">
+                      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                        </path>
+                      </svg>
+                      <h4 class="font-medium text-gray-900">Notifications automatiques</h4>
+                      <span class="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">Via
+                        template</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3">
+                      @for (email of automaticEmails; track email.email) {
+                      <div class="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="text-sm font-medium text-blue-900 truncate">{{ email.email }}</span>
+                      </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div class="w-px bg-gray-200"></div>
+
+                <div class="flex-1 min-w-0">
+                  @let manualEmails = getManualEmails();
+                  <div class="space-y-3">
+                    <div class="flex items-center space-x-2">
+                      <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z">
+                        </path>
+                      </svg>
+                      <h4 class="font-medium text-gray-900">Notifications personnalisées</h4>
+                      <span class="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">Ajout
+                        manuel</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3">
+                      @for (email of manualEmails; track email.email) {
+                      <div class="flex items-center space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="text-sm font-medium text-green-900 truncate">{{ email.email }}</span>
+                      </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+              }
+
+              @else if (getAutomaticEmails().length > 0) {
+              <div>
+                @let automaticEmails = getAutomaticEmails();
+                <div class="space-y-3">
+                  <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                      </path>
+                    </svg>
+                    <h4 class="font-medium text-gray-900">Notifications automatiques</h4>
+                    <span class="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">Via
+                      template</span>
+                  </div>
+                  <div class="grid grid-cols-1 gap-3">
+                    @for (email of automaticEmails; track email.email) {
+                    <div class="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span class="text-sm font-medium text-blue-900 truncate">{{ email.email }}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+              }
+
+              @else if (getManualEmails().length > 0) {
+              <div>
+                @let manualEmails = getManualEmails();
+                <div class="space-y-3">
+                  <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z">
+                      </path>
+                    </svg>
+                    <h4 class="font-medium text-gray-900">Notifications personnalisées</h4>
+                    <span class="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">Ajout
+                      manuel</span>
+                  </div>
+                  <div class="grid grid-cols-1 gap-3">
+                    @for (email of manualEmails; track email.email) {
+                    <div class="flex items-center space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span class="text-sm font-medium text-green-900 truncate">{{ email.email }}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+              }
+
+              @else {
+              <div class="text-center py-8">
+                <svg class="mx-auto w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <h4 class="text-sm font-medium text-gray-900 mb-1">Aucune notification configurée</h4>
+                <p class="text-xs text-gray-500">Aucun destinataire automatique ou manuel pour cet incident</p>
+              </div>
+              }
+
+            </div>
+          </div>
+          } @else {
+          <div class="text-center py-8">
+            <svg class="mx-auto w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <h4 class="text-sm font-medium text-gray-900 mb-1">Aucune notification configurée</h4>
+            <p class="text-xs text-gray-500">Aucun destinataire automatique ou manuel pour cet incident</p>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer avec actions supplémentaires -->
+    <div class="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
+      <p class="text-sm text-gray-500 font-bold">
+        Date d'ouverture : {{ incidentDisplayService.formatDateTime(incident.dateOuverture) }}
+      </p>
+      @if (incident.dateCloture) {
+      <p class="text-sm text-gray-500 font-bold">
+        Date de clôture : {{ incidentDisplayService.formatDateTime(incident.dateCloture) }}
+      </p>
+      }
+
+      @if (incident.updated_at) {
+      <p class="text-sm text-gray-500 font-bold">
+        Mis à jour le : {{ incidentDisplayService.formatDateTime(incident.updated_at) }}
+      </p>
+      }
+
+      <div class="flex gap-3">
+        <button (click)="goList()"
+          class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+          Retour à la liste
+        </button>
+      </div>
+    </div>
+
+  </div>
+  }
+
+  <!-- Onglet "Journal" (composant d'historique) -->
+  @if (permissionService.canViewHistory() && activeTab === 'history') {
+  <div class="tab-content-history">
+    <app-incident-history [incidentId]="incidentId"></app-incident-history>
+  </div>
+  }
+
+  }
+</div>

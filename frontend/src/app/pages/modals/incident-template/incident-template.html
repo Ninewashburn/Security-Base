@@ -1,0 +1,193 @@
+<!-- src/app/components/incident-template/incident-template.html -->
+
+@if (isVisible) {
+<!-- Overlay -->
+<div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+
+  <!-- Modal -->
+  <div class="bg-white rounded-lg w-11/12 max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl"
+    (click)="$event.stopPropagation()">
+
+    <!-- Header simplifié - tout sur une ligne -->
+    <div class="flex justify-between items-center px-6 py-5 border-b border-gray-200 bg-gray-50">
+      <h3 class="text-xl font-semibold text-gray-900">
+        Modèles d'incident
+      </h3>
+      
+      <!-- Actions header - nouveau modèle + fermeture -->
+      <div class="flex items-center gap-3">
+        @if (!showForm) {
+        <button type="button"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+          (click)="startCreate()">
+          + Nouveau modèle
+        </button>
+        }
+        @if (showForm) {
+        <button type="button"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+          (click)="addAction()">
+          + Ajouter une action
+        </button>
+        }
+        <button type="button"
+          class="w-8 h-8 flex items-center justify-center text-2xl text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+          (click)="closeModal()">×</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="px-6 py-6 max-h-[calc(90vh-140px)] overflow-y-auto">
+
+      <!-- Liste des templates existants - épurée -->
+      @if (!showForm) {
+      <div class="templates-list">
+        
+        @if (existingTemplates.length > 0) {
+        <div class="space-y-3">
+          @for (template of existingTemplates; track template.id) {
+          <div class="flex justify-between items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <div class="flex-1">
+              <div class="font-medium text-gray-900">{{ template.nom_objet }}</div>
+              <div class="text-sm text-gray-600">{{ template.actions_count }} actions prédéfinies</div>
+            </div>
+            <div class="flex gap-2">
+              <button type="button"
+                class="px-3 py-1 bg-orange-500 text-white text-sm rounded hover:bg-orange-600 transition-colors"
+                (click)="startEdit(template)">
+                Modifier
+              </button>
+              <button type="button"
+                class="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition-colors"
+                (click)="deleteTemplate(template.id)">
+                Supprimer
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <div class="text-center py-12 text-gray-500">
+          <div class="text-4xl mb-4">📋</div>
+          <p>Aucun modèle d'incident créé</p>
+          <p class="text-sm mt-2">Cliquez sur "Nouveau modèle" pour commencer</p>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Formulaire création/édition amélioré -->
+      @if (showForm) {
+      <div class="template-form">
+        <form [formGroup]="templateForm" (ngSubmit)="onSubmit()">
+
+          <!-- Informations de base - Layout horizontal -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Informations générales</h4>
+
+            <!-- Nom de l'objet sur la même ligne -->
+            <div class="flex items-center gap-3 mb-4">
+              <label for="nom_objet" class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Nom de l'objet <span class="text-red-500">*</span>
+              </label>
+              <div class="flex-1">
+                <input type="text" id="nom_objet" formControlName="nom_objet"
+                  placeholder="Ex: Coupure électrique, Panne réseau..."
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                  [class.border-red-500]="templateForm.get('nom_objet')?.errors && templateForm.get('nom_objet')?.touched">
+                
+                @if (templateForm.get('nom_objet')?.errors?.['required'] && templateForm.get('nom_objet')?.touched) {
+                <div class="mt-1 text-sm text-red-600">
+                  Le nom de l'objet est obligatoire
+                </div>
+                }
+                @if (templateForm.get('nom_objet')?.errors?.['nonUnique']) {
+                <div class="mt-1 text-sm text-red-600">
+                  Ce nom de modèle existe déjà.
+                </div>
+                }
+              </div>
+            </div>
+
+            <!-- Liste de diffusion personnelle (personnalisée) -->
+            <div class="flex items-center gap-3">
+              <label for="diffusion_list_id" class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Notifier la liste personnalisée
+              </label>
+              <div class="flex-1">
+                @if (personalLists.length > 0) {
+                  <select id="diffusion_list_id" formControlName="diffusion_list_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm">
+                    <option [ngValue]="null">Aucune</option>
+                    @for (list of personalLists; track list.id) {
+                      <option [value]="list.id">{{ list.name }}</option>
+                    }
+                  </select>
+                } @else {
+                  <div class="text-sm text-gray-500 italic bg-gray-100 p-2 rounded-md">
+                    Aucune liste personnalisée. Vous pouvez en créer depuis le menu 'Liste diffusion'
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions - Layout horizontal -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Actions à mener</h4>
+
+            <div formArrayName="actions" class="space-y-4">
+              @for (actionControl of getActionsFormArray().controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+
+                <!-- Header de l'action avec bouton supprimer -->
+                <div class="flex justify-between items-center mb-3">
+                  <span class="font-semibold text-gray-800 text-sm">Action {{ i + 1 }}</span>
+                  <button type="button"
+                    class="w-6 h-6 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full transition-colors text-sm"
+                    (click)="removeAction(i)" [disabled]="getActionsFormArray().length === 1">
+                    ×
+                  </button>
+                </div>
+
+                <!-- Description sur la même ligne - Layout horizontal -->
+                <div class="flex items-center gap-3">
+                  <label class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    Description de l'action <span class="text-red-500">*</span>
+                  </label>
+                  <input type="text" formControlName="action" 
+                    placeholder="Ex: Vérifier l'alimentation électrique"
+                    (keydown.enter)="onActionInputEnter($event)"
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm">
+                </div>
+              </div>
+              }
+            </div>
+
+            @if (templateForm.get('actions')?.hasError('atLeastOneActionRequired') && templateForm.get('actions')?.touched) {
+            <div class="text-sm text-red-600 mt-2">
+              Au moins une action est requise.
+            </div>
+            }
+          </div>
+
+          <!-- Boutons - Footer -->
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 bg-white sticky bottom-0">
+            <button type="button"
+              class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              (click)="cancelForm()">
+              Annuler
+            </button>
+            <button type="submit"
+              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              [disabled]="!templateForm.valid || isSubmitting">
+              {{ isSubmitting ? 'Enregistrement...' : (isEditing ? 'Modifier' : 'Créer') }}
+            </button>
+          </div>
+        </form>
+      </div>
+      }
+    </div>
+  </div>
+</div>
+}

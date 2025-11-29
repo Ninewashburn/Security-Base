@@ -1,0 +1,278 @@
+/* ===== VARIABLES ET MIXINS ===== */
+$primary-blue: #2563eb;
+$gray-light: #6b7280;
+$red-accent: #ef4444;
+$suggestion-red: #fee2e2;
+$suggestion-red-border: #fecaca;
+$suggestion-red-text: #991b1b;
+$transition-base: all 0.2s ease-in-out;
+
+@mixin button-hover($shadow-color) {
+  transition: $transition-base;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($shadow-color, 0.3);
+  }
+
+    &:active {
+    transform: translateY(0);
+  }
+}
+
+@mixin editor-height($height) {
+  ::ng-deep .ql-editor {
+    min-height: #{$height}px !important;
+  }
+}
+
+/* ===== ZONES DE SUGGESTIONS COLORÉES PAR TYPE ===== */
+.suggestions-zone {
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border: 1px solid;
+
+  /* Actions menées (VERT) */
+  &.actions-menees {
+    background-color: #dcfce7;
+    /* Vert clair */
+    border-color: #bbf7d0;
+    /* Bordure vert clair */
+
+    .suggestions-title,
+    .suggestion-item {
+      color: #166534;
+      /* Vert foncé pour le texte */
+    }
+
+    .suggestion-item:hover {
+      background-color: rgba(22, 101, 52, 0.1);
+    }
+  }
+
+  /* Actions à mener (BLEU) */
+  &.actions-a-mener {
+    background-color: #dbeafe;
+    /* Bleu clair */
+    border-color: #bfdbfe;
+    /* Bordure bleu clair */
+
+    .suggestions-title,
+    .suggestion-item {
+      color: #1e40af;
+      /* Bleu foncé pour le texte */
+    }
+
+    .suggestion-item:hover {
+      background-color: rgba(30, 64, 175, 0.1);
+    }
+  }
+
+  /* Styles communs pour tous les types */
+  .suggestions-title {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .suggestion-item {
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: $transition-base;
+    display: block;
+
+    &:active {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+/* ===== QUILL EDITOR - CONFIGURATION DE BASE ===== */
+::ng-deep {
+
+  /* Largeur complète pour tous les éléments Quill */
+  quill-editor,
+  .ql-container,
+  .ql-toolbar,
+  .ql-editor {
+    display: block !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Strike-through pour les cases cochées - FONCTIONNALITÉ PRINCIPALE */
+  .ql-editor li[data-list="checked"] {
+    text-decoration: line-through !important;
+    color: $gray-light !important;
+    opacity: 0.7 !important;
+    transition: $transition-base !important;
+  }
+
+  /* Styles pour les checkboxes interactives */
+  .ql-editor {
+    input[type="checkbox"] {
+      width: 16px !important;
+      height: 16px !important;
+      margin-right: 8px !important;
+      cursor: pointer !important;
+      appearance: none !important;
+      border: 2px solid #d1d5db !important;
+      border-radius: 3px !important;
+      background: white !important;
+      position: relative !important;
+
+      &:checked {
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+
+        &::after {
+          content: '✓' !important;
+          color: white !important;
+          font-size: 12px !important;
+          font-weight: bold !important;
+          position: absolute !important;
+          top: -2px !important;
+          left: 2px !important;
+        }
+      }
+    }
+
+    div[style*="display: flex"] {
+      user-select: none !important;
+
+      &:hover {
+        background-color: #f9fafb !important;
+        border-radius: 4px !important;
+        padding: 2px 4px !important;
+      }
+    }
+  }
+}
+
+/* ===== HAUTEURS SPÉCIFIQUES PAR TYPE D'ÉDITEUR ===== */
+.description-editor {
+  @include editor-height(180);
+}
+
+.compact-editor {
+  @include editor-height(150);
+}
+
+.basic-editor {
+  @include editor-height(120);
+}
+
+.email-editor {
+  @include editor-height(160);
+}
+
+/* ===== ANIMATIONS ET INTERACTIONS ===== */
+.selection-item {
+  transition: $transition-base;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-blue;
+    outline-offset: 2px;
+  }
+}
+
+.submit-button {
+  @include button-hover($primary-blue);
+}
+
+button[title="Vider le contenu"] {
+  transition: $transition-base !important;
+
+  &:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 2px 4px rgba($red-accent, 0.2) !important;
+  }
+}
+
+/* ===== ANIMATIONS KEYFRAMES ===== */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.progress-bar {
+  transition: width 0.3s ease-in-out;
+}
+
+/* ===== LAYOUT ET GRID ===== */
+.grid.grid-cols-1.lg\:grid-cols-2>div {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1024px) {
+  .description-editor {
+    @include editor-height(140);
+  }
+
+  .compact-editor {
+    @include editor-height(120);
+  }
+
+  .basic-editor {
+    @include editor-height(100);
+  }
+
+  .grid.grid-cols-1.lg\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .responsive-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .btn {
+      width: 100%;
+    }
+  }
+
+  .suggestions-zone {
+    .suggestion-item {
+      font-size: 0.65rem;
+    }
+
+    .suggestions-title {
+      font-size: 0.7rem;
+    }
+  }
+}
+
+/*
+ * Override pour les inputs dans "Actions à Mener".
+ * Force un fond transparent pour annuler le style du mode sombre
+ * qui s'applique globalement.
+*/
+div[formArrayName="actionsAMener"] input {
+  background-color: transparent !important;
+}

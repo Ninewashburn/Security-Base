@@ -1,0 +1,23 @@
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  @if (authService.isAuthenticated$ | async) {
+  <app-header></app-header>
+  }
+  @if (isCheckingSession) {
+  <!-- Loader pendant la vérification de session -->
+  <div class="flex items-center justify-center h-screen">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <p class="mt-4 text-gray-600 dark:text-gray-400">Vérification de la session...</p>
+    </div>
+  </div>
+  } @else {
+  <!-- Contenu principal une fois la session vérifiée -->
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+  @if (authService.isAuthenticated$ | async) {
+  <app-footer></app-footer>
+  }
+  }
+  <app-notification></app-notification>
+</div>

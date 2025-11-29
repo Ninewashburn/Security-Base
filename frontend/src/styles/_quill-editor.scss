@@ -1,0 +1,139 @@
+/* src/styles/_quill-editor.scss */
+/* ===== QUILL EDITOR - STYLES COMPLETS ===== */
+
+/* Mode sombre Quill */
+.dark {
+  .ql-container {
+    background-color: rgb(55 65 81) !important;
+    border-color: rgb(75 85 99) !important;
+    border-radius: 0 0 0.5rem 0.5rem;
+  }
+  
+  .ql-toolbar {
+    background-color: rgb(31 41 55) !important;
+    border-color: rgb(75 85 99) !important;
+    border-radius: 0.5rem 0.5rem 0 0;
+    
+    button, .ql-picker-label, .ql-picker-item {
+      color: rgb(229 231 235) !important;
+      
+      &:hover {
+        background-color: rgb(75 85 99) !important;
+        color: rgb(255 255 255) !important;
+      }
+      
+      &.ql-active {
+        background-color: rgb(59 130 246) !important;
+        color: rgb(255 255 255) !important;
+      }
+    }
+    
+    .ql-stroke { stroke: rgb(229 231 235) !important; }
+    .ql-fill { fill: rgb(229 231 235) !important; }
+  }
+  
+  .ql-editor {
+    background-color: rgb(55 65 81) !important;
+    
+    &.ql-blank::before {
+      color: rgb(156 163 175) !important;
+      opacity: 0.8 !important;
+      font-style: italic;
+    }
+  }
+}
+
+/* ===== CHECKBOXES QUILL ===== */
+.ql-editor {
+  /* Cibler les vraies listes Quill avec data-list="check" */
+  ul[data-list="check"] li,
+  ol[data-list="check"] li,
+  li[data-list="check"] {
+    /* PROPRIÉTÉS AVANT LES RÈGLES IMBRIQUÉES */
+    position: relative !important;
+    padding-left: 30px !important;
+    list-style: none !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    transition: all 0.2s ease !important;
+    
+    /* Créer la checkbox avec ::before */
+    &::before {
+      content: '' !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 2px !important;
+      width: 16px !important;
+      height: 16px !important;
+      border: 2px solid #d1d5db !important;
+      border-radius: 3px !important;
+      background: white !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    /* État hover */
+    &:hover {
+      background-color: rgba(243, 244, 246, 0.5) !important;
+      border-radius: 4px !important;
+      padding: 2px 4px !important;
+      margin: -2px -4px !important;
+      
+      &::before {
+        border-color: #6b7280 !important;
+        background-color: #f9fafb !important;
+      }
+    }
+    
+    /* État coché */
+    &.ql-checked {
+      opacity: 0.8 !important;
+      text-decoration: line-through !important;
+      color: #6b7280 !important;
+      
+      &::before {
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+      }
+      
+      &::after {
+        content: '✓' !important;
+        position: absolute !important;
+        left: 3px !important;
+        top: 0px !important;
+        color: white !important;
+        font-size: 12px !important;
+        font-weight: bold !important;
+        pointer-events: none !important;
+      }
+    }
+  }
+}
+
+/* Support dark mode pour les checkboxes */
+.dark .ql-editor {
+  li[data-list="check"] {
+    &::before {
+      border-color: rgb(75 85 99) !important;
+      background: rgb(31 41 55) !important;
+    }
+    
+    &:hover {
+      background-color: rgba(55, 65, 81, 0.5) !important;
+      
+      &::before {
+        border-color: rgb(156 163 175) !important;
+        background-color: rgb(55 65 81) !important;
+      }
+    }
+    
+    &.ql-checked {
+      color: rgb(156 163 175) !important;
+      
+      &::before {
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+      }
+    }
+  }
+}

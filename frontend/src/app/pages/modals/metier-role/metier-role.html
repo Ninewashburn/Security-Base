@@ -1,0 +1,139 @@
+<!-- metier-role-modal.html -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+
+    <!-- Header -->
+    <div class="bg-blue-600 text-white px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">📋</span>
+        <h2 class="text-xl font-semibold">Association de rôle aux métiers</h2>
+      </div>
+      <button (click)="closeModal()" class="text-white hover:text-gray-200 transition-colors text-2xl">
+        ×
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6">
+      @if (loading) {
+      <div class="flex items-center justify-center py-12">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p class="text-gray-600 dark:text-gray-400">Chargement des métiers...</p>
+        </div>
+      </div>
+      } @else {
+      <!-- Sélection du rôle -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Rôle à associer
+        </label>
+        <select [(ngModel)]="selectedRole"
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <option value="">Sélectionnez un rôle</option>
+          <option value="null" class="bg-gray-100 text-gray-700">-- Aucun droit --</option>
+          @for (role of roles; track role.id) {
+          <option [value]="role.id" [ngClass]="getRoleBadgeClass(role.code)">{{ role.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Recherche -->
+      <div class="mb-4">
+        <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="filterMetiers()"
+          placeholder="Rechercher un métier..."
+          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- Actions de sélection -->
+      <div class="mb-4 flex gap-4 text-sm">
+        <button (click)="selectAll()" class="text-blue-600 dark:text-blue-400 hover:underline">
+          Tout sélectionner
+        </button>
+        <button (click)="deselectAll()" class="text-blue-600 dark:text-blue-400 hover:underline">
+          Tout désélectionner
+        </button>
+        <span class="text-gray-600 dark:text-gray-400 ml-auto">
+          {{ selectedMetiers.size }} métier(s) sélectionné(s) sur {{ filteredMetiersList.length }}.
+        </span>
+      </div>
+
+      <!-- Liste des métiers -->
+      <div class="border dark:border-gray-600 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+        @if (filteredMetiersList.length === 0) {
+        <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+          Aucun métier trouvé
+        </div>
+        } @else {
+        @for (metier of filteredMetiersList; track metier.num_metier) {
+        <label
+          class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700 last:border-b-0 cursor-pointer">
+          @if (metier.num_metier !== currentUserMetierNum) {
+          <input type="checkbox" [checked]="selectedMetiers.has(metier.num_metier)"
+            (change)="toggleMetier(metier.num_metier)"
+            class="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
+          } @else {
+          <div class="h-4 w-4"></div>
+          }
+
+          <div class="flex-1">
+            <div class="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              {{ metier.nom_metier }}
+              @if (metier.num_metier === currentUserMetierNum) {
+              <span class="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-1 rounded">
+                Votre métier - Non modifiable
+              </span>
+              }
+              @if (protectedMetiers.includes(metier.num_metier)) {
+              <span
+                class="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-1 rounded">
+                Admin système
+              </span>
+              }
+            </div>
+            @if (metier.role) {
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              Rôle actuel :
+              <span class="font-medium"
+                [class]="'text-' + getRoleColor(metier.role.code) + ' dark:text-' + getRoleColor(metier.role.code) + '-400'">
+                {{ metier.role.label }}
+              </span>
+              @if (metier.role.code !== 'consultant' && metier.role.label !== 'Administrateur') {
+              <span class="text-xs text-orange-600 dark:text-orange-400 ml-2">
+                (sera modifié)
+              </span>
+              }
+            </div>
+            } @else {
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              Rôle actuel : <span class="font-medium text-gray-600">Aucun</span>
+            </div>
+            }
+          </div>
+        </label>
+        }
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex items-center justify-between border-t dark:border-gray-600">
+      <button (click)="closeModal()"
+        class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white transition-colors">
+        Annuler
+      </button>
+
+      <button (click)="save()" [disabled]="!selectedRole || selectedMetiers.size === 0 || saving"
+        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 flex items-center gap-2">
+        @if (saving) {
+        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+        <span>Enregistrement...</span>
+        } @else {
+        <span>✓</span>
+        <span>Associer le rôle</span>
+        }
+      </button>
+    </div>
+  </div>
+</div>

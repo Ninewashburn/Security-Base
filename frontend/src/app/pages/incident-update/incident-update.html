@@ -1,0 +1,80 @@
+<!-- src/app/pages/incident-update/incident-update.html -->
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header avec barre de progression -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <button type="button" (click)="quickReturn()"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Retour à la liste
+            </button>
+            <div class="border-l border-gray-300 pl-4">
+              <h1 class="text-2xl font-bold text-gray-900">
+                📝 MODIFIER L'INCIDENT #{{ incident?.id }}
+              </h1>
+              <p class="mt-1 text-sm text-gray-600">
+                Mettre à jour les informations du rapport d'incident de sécurité
+              </p>
+            </div>
+          </div>
+          
+          <!-- Barre de progression -->
+          @if (!isLoading && incident) {
+            <div class="text-right">
+              <div class="text-sm text-gray-600 mb-1">
+                Progression : {{ currentFormProgress }}%
+              </div>
+              <div class="w-32 bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  [style.width.%]="currentFormProgress">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- État de chargement -->
+    @if (isLoading) {
+    <div class="text-center py-16">
+      <div class="flex flex-col items-center space-y-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p class="text-lg text-gray-600">Chargement de l'incident...</p>
+      </div>
+    </div>
+    }
+
+    <!-- Erreur de chargement -->
+    @if (!isLoading && !incident) {
+    <div class="text-center py-16">
+      <div class="flex flex-col items-center space-y-4">
+        <div class="text-red-500 text-6xl">⚠️</div>
+        <h2 class="text-xl font-semibold text-gray-900">Incident non trouvé</h2>
+        <p class="text-gray-600">L'incident que vous essayez de modifier n'existe pas.</p>
+        <button (click)="quickReturn()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          Retour à la liste
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Formulaire commun & progression de barre actualisée -->
+    @if (!isLoading && incident) {
+    <app-incident-form 
+      [initialIncident]="incident" 
+      (save)="onSave($event)" 
+      (cancel)="onCancel()" 
+      (progressChanged)="onProgressChanged($event)"
+      #incidentFormRef>
+    </app-incident-form>
+    }
+  </div>
+</div>

@@ -1,0 +1,305 @@
+<!-- src/app/pages/modals/trash-modal/trash-modal.html -->
+
+<!-- Modal Backdrop -->
+@if (isVisible) {
+<div class="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+
+  <!-- Conteneur centré -->
+  <div class="min-h-full flex items-start justify-center p-4 pt-8">
+
+    <!-- Modal Content -->
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-6xl min-h-[80vh] max-h-[90vh] flex flex-col relative"
+      (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+        <div class="flex items-center justify-between">
+
+          <!-- Titre avec icône -->
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                </path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900">Corbeille des Incidents</h2>
+              <p class="text-sm text-gray-600">Incidents supprimés pouvant être restaurés</p>
+            </div>
+          </div>
+
+          <!-- Compteur et bouton fermer -->
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-600">
+              <strong>Incidents :</strong> {{ trashedIncidents.length }}
+            </span>
+            <button (click)="closeModal()"
+              class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded hover:bg-gray-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      @if (isLoading) {
+      <div class="flex-grow flex items-center justify-center">
+        <div class="text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+          <p class="text-gray-500 mt-2">Chargement de la corbeille...</p>
+        </div>
+      </div>
+      } @else {
+
+      <!-- Content -->
+      <div class="flex-grow overflow-y-auto">
+
+        <!-- Message si vide -->
+        @if (trashedIncidents.length === 0) {
+        <div class="flex items-center justify-center h-full">
+          <div class="text-center py-12">
+            <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Corbeille vide</h3>
+            <p class="text-gray-500">Aucun incident supprimé pour le moment.</p>
+          </div>
+        </div>
+        } @else {
+
+        <!-- Liste des incidents -->
+        <div class="p-6 space-y-4">
+          @for (incident of trashedIncidents; track trackByIncidentId($index, incident)) {
+
+          <!-- Card pour chaque incident -->
+          <div class="border border-gray-200 rounded-lg p-5 bg-white hover:bg-gray-50 transition-colors shadow-sm">
+
+            <!-- Ligne principale: ID + Titre + Actions -->
+            <div class="flex items-start justify-between mb-4">
+
+              <!-- ID + Titre + Badges -->
+              <div class="flex items-start gap-4 flex-1">
+                <!-- Badge ID -->
+                <div class="flex-shrink-0">
+                  <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <span class="text-red-700 text-sm font-bold">#{{ incident.id }}</span>
+                  </div>
+                </div>
+
+                <!-- Contenu principal -->
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-lg font-semibold text-gray-900 mb-2 leading-tight">{{ incident.object }}</h3>
+
+                  <!-- Badges en ligne -->
+                  <div class="flex items-center gap-2 mb-3">
+                    <!-- Gravité -->
+                    @if (incident.gravity) {
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                      [ngClass]="incident.gravity === 'tres_grave' ? 'bg-red-100 text-red-800' : 
+                                 incident.gravity === 'grave' ? 'bg-orange-100 text-orange-800' :
+                                 incident.gravity === 'moyen' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
+                      {{ incident.gravity === 'tres_grave' ? 'Très Grave' :
+                      incident.gravity === 'grave' ? 'Grave' :
+                      incident.gravity === 'moyen' ? 'Moyen' : 'Faible' }}
+                    </span>
+                    }
+
+                    <!-- Statut -->
+                    @if (incident.status) {
+                    <span
+                      class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                      {{ statusConfig[incident.status]?.label || incident.status }}
+                    </span>
+                    }
+
+                    <!-- Domaines -->
+                    @if (incident.domains && incident.domains.length > 0) {
+                    <span
+                      class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                      {{ incident.domains.length }} domaine{{ incident.domains.length > 1 ? 's' : '' }}
+                    </span>
+                    }
+
+                    <!-- Sites Impactés -->
+                    @if (incident.sitesImpactes && incident.sitesImpactes.length > 0) {
+                    <span
+                      class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                      {{ incident.sitesImpactes.length }} site{{ incident.sitesImpactes.length > 1 ? 's' : '' }}
+                    </span>
+                    }
+                  </div>
+
+                  <!-- Description si présente -->
+                  @if (incident.description && incident.description.length > 0) {
+                  <div class="text-sm text-gray-600 mb-3">
+                    <div class="p-3 rounded border border-gray-300">
+                      <span class="font-medium text-gray-700">Description :</span>
+                      <div class="mt-1" [innerHTML]="incident.description"></div>
+                    </div>
+                  </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Actions à droite -->
+              <div class="flex items-center gap-2 flex-shrink-0 ml-4">
+                <!-- Bouton Restaurer -->
+                @if (PermissionService.canRestoreFromTrash()) {
+                <button (click)="restoreIncident(incident)"
+                  class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-green-100 border border-green-300 rounded-md hover:bg-green-200 focus:ring-2 focus:ring-green-500 transition-colors">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                  </svg>
+                  Restaurer
+                </button>
+                }
+                <!-- Bouton Supprimer définitivement -->
+                @if (PermissionService.canForceDeleteIncident()) {
+                <button (click)="forceDeleteIncident(incident)"
+                  class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:ring-2 focus:ring-red-500 transition-colors">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                    </path>
+                  </svg>
+                  Supprimer
+                </button>
+                }
+              </div>
+            </div>
+
+            <!-- Section informations détaillées -->
+            <div class="pt-4 border-t border-gray-100 space-y-4">
+
+              <!-- Ligne 1: Dates et Détails -->
+              <div class="grid grid-cols-2 gap-6">
+
+                <!-- Colonne Dates -->
+                <div class="space-y-3">
+                  <h4 class="font-semibold text-gray-800 text-sm uppercase tracking-wide">Informations temporelles</h4>
+
+                  <div class="space-y-2 text-sm">
+                    <!-- Date création -->
+                    <div class="flex items-center justify-between p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                      <span class="font-medium text-blue-800">Créé le :</span>
+                      <span class="font-bold text-blue-900">{{
+                        incidentDisplayService.formatDateShort(incident.dateOuverture) }} à {{
+                        incidentDisplayService.formatTimeShort(incident.dateOuverture) }}</span>
+                    </div>
+
+                    <!-- Date suppression  -->
+                    @if (incident.deleted_at) {
+                    <div class="flex items-center justify-between p-2 bg-red-50 rounded border-l-4 border-red-400">
+                      <span class="font-medium text-red-800">Supprimé le :</span>
+                      <span class="font-bold text-red-900">{{
+                        incidentDisplayService.formatDateShort(incident.deleted_at) }} à {{
+                        incidentDisplayService.formatTimeShort(incident.deleted_at) }}</span>
+                    </div>
+                    }
+
+                    <!-- Date clôture si présente -->
+                    @if (incident.dateCloture) {
+                    <div class="flex items-center justify-between p-2 bg-green-50 rounded border-l-4 border-green-400">
+                      <span class="font-medium text-green-800">Clôturé le :</span>
+                      <span class="font-bold text-green-900">{{
+                        incidentDisplayService.formatDateShort(incident.dateCloture) }} à {{
+                        incidentDisplayService.formatTimeShort(incident.dateCloture) }}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Colonne Détails -->
+                <div class="space-y-3">
+                  <h4 class="font-semibold text-gray-800 text-sm uppercase tracking-wide">Détails de l'incident</h4>
+
+                  <div class="space-y-2 text-sm">
+                    <!-- Créateur -->
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span class="text-gray-600">Créateur :</span>
+                      <span class="font-medium text-gray-900">{{ incident.creator?.full_name }}</span>
+                    </div>
+
+                    <!-- Assigné à -->
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span class="text-gray-600">Modifié par :</span>
+                      <span class="font-medium text-gray-900">{{ incident.assignee?.full_name }}</span>
+                    </div>
+
+                    @if (incident.ticketNumber) {
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span class="text-gray-600">Ticket :</span>
+                      <span class="font-medium text-gray-900">{{ incident.ticketNumber }}</span>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ligne 2: Actions en attente (si présentes) -->
+              @if (incident.actionsAMener && incident.actionsAMener.length > 0) {
+              <div class="mt-4">
+                <div class="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z">
+                      </path>
+                    </svg>
+                    <span class="font-medium text-amber-800">Actions en attente</span>
+                  </div>
+                  <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
+                    1 action(s) en attente
+                  </span>
+                </div>
+              </div>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Footer -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex-shrink-0">
+        <div class="flex items-center justify-between">
+
+          <div class="text-sm text-gray-600">
+            @if (trashedIncidents.length > 0) {
+            <div class="flex items-center gap-2 text-amber-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z">
+                </path>
+              </svg>
+              <span>Les incidents peuvent être restaurés ou supprimés définitivement</span>
+            </div>
+            } @else {
+            <span class="text-gray-500">La corbeille est vide</span>
+            }
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button type="button" (click)="closeModal()" [disabled]="isLoading"
+              class="px-6 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors">
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}

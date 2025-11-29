@@ -1,0 +1,923 @@
+<!-- src/app/pages/incidents/incidents.html -->
+<div class="bg-gray-50 py-4 px-2 sm:px-4">
+
+  <!-- Header responsive en 2 lignes : Titre puis Actions complètes -->
+  <div class="mb-4 sm:mb-6">
+    @if(permissionService.canViewAllIncidents()){
+    <!-- Ligne 1: Titre à gauche + Informations + Compteurs à droite -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 space-y-4 lg:space-y-0">
+      <!-- Titre seul à gauche -->
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Base d'Incidents Sécurité</h1>
+
+      <!-- Informations + Compteurs à droite -->
+      <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6">
+
+        <span class="text-gray-600 text-sm sm:text-lg">
+          <strong>Gestion des incidents de sécurité URSSAF :</strong> {{ incidents.length }} incidents
+          @if (filterState.advancedFilters.status !== 'archive') {
+          <span>total</span>
+          } @else {
+          <span>archivés</span>
+          }
+        </span>
+
+        <!-- Conteneur des bulles avec visibilité conditionnelle -->
+        <div class="flex space-x-3 text-sm" [class.invisible]="filterState.advancedFilters.status === 'archive'">
+          <span class="px-3 py-1 badge-orange rounded-full font-medium">
+            {{ getIncidentsByStatus('en_cours').length }} En cours
+          </span>
+          <span class="px-3 py-1 badge-green rounded-full font-medium">
+            {{ getIncidentsByStatus('cloture').length }} Cloturés
+          </span>
+          @if (incidentsEnAttente.length > 0) {
+          <span class="px-3 py-1 badge-purple rounded-full font-medium">
+            {{ getIncidentsByStatus('en_attente').length }} En attente
+          </span>
+          }
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Ligne 2: Actions sur une seule ligne avec design moderne -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+
+      <!-- Tous les boutons d'action sur une seule ligne -->
+      <div class="flex flex-wrap items-center gap-3">
+
+        <!-- Export Excel - Protection can_export -->
+        @if (permissionService.canExportData()) {
+        <button (click)="openExportXLSX()"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">📊</span>
+          <span class="leading-tight">Export<br>Excel</span>
+        </button>
+        }
+
+        <!-- Export PDF - Protection can_export -->
+        @if (permissionService.canExportData()) {
+        <button (click)="openExportPDF()"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">📄</span>
+          <span class="leading-tight">Export<br>PDF</span>
+        </button>
+        }
+
+        <!-- Archive toggle - Protection can_view_archives -->
+        @if (permissionService.canViewArchives()) {
+        <button (click)="toggleArchivedView()" [ngClass]="{
+          'bg-cyan-500 hover:bg-cyan-600': filterState.advancedFilters.status !== 'archive',
+          'bg-amber-500 hover:bg-amber-600': filterState.advancedFilters.status === 'archive'
+        }"
+          class="inline-flex items-center gap-2 px-4 py-2.5 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">{{ filterState.advancedFilters.status === 'archive' ? '📋' : '🗄️' }}</span>
+          <span class="leading-tight">{{ filterState.advancedFilters.status === 'archive' ? 'Voir' : 'Voir'
+            }}<br>archives</span>
+        </button>
+        }
+
+        <!-- Corbeille - Protection can_force_delete -->
+        @if (permissionService.canViewTrash()) {
+        <button (click)="openTrashModal()"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">🗑️</span>
+          <span class="leading-tight">Voir<br>corbeille</span>
+        </button>
+        }
+
+        <!-- Création incident - Protection can_create -->
+        @if (permissionService.canCreateIncident()) {
+        <button (click)="navigateToCreate()"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">⚠️</span>
+          <span class="leading-tight">Ajouter<br>incident</span>
+        </button>
+        }
+
+        <!-- Liste diffusion - Protection can_manage_emails -->
+        @if (permissionService.canManageEmails()) {
+        <button (click)="openDiffusionModal()"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">📧</span>
+          <span class="leading-tight">Liste<br>diffusion</span>
+        </button>
+        }
+
+        <!-- Tableau de bord - Toujours visible -->
+        @if (permissionService.canViewDashboard()) {
+        <button (click)="goToDashboard()"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">📊</span>
+          <span class="leading-tight">Tableau<br>de bord</span>
+        </button>
+        }
+
+        <!-- Mode gestion - Visible si au moins une permission admin -->
+        @if (permissionService.canModifyIncident() || permissionService.canForceDeleteIncident() ||
+        permissionService.canArchiveIncidents() ||
+        permissionService.canValidateIncidents()) {
+        <button (click)="toggleAdminMode()" [ngClass]="{
+          'bg-orange-500 hover:bg-orange-600': !isAdminModeActive,
+          'bg-gray-500 hover:bg-gray-600': isAdminModeActive
+        }"
+          class="inline-flex items-center gap-2 px-4 py-2.5 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">{{ isAdminModeActive ? '📋' : '⚙️' }}</span>
+          <span class="leading-tight">{{ isAdminModeActive ? 'Quitter' : 'Mode' }}<br>gestion</span>
+        </button>
+        }
+
+        <!-- Gérer colonnes - Toujours visible -->
+        <button (click)="showColumnsMenu($event)"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">🔧</span>
+          <span class="leading-tight">Gérer<br>colonnes</span>
+        </button>
+
+        <!-- Recherche avancée - Toujours visible -->
+        <button (click)="toggleAdvancedSearch()"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium">
+          <span class="text-lg">🔍</span>
+          <span class="leading-tight">Recherche<br>avancée</span>
+        </button>
+
+      </div>
+
+      <!-- Search and help group (stays on right) -->
+      <div class="flex items-center gap-3">
+        <!-- Barre de recherche avec style moderne -->
+        <div class="relative">
+          <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Rechercher..."
+            class="pl-10 pr-4 py-2.5 border-0 bg-white rounded-xl shadow-lg focus:ring-2 focus:ring-blue-500 focus:shadow-xl transition-all duration-200 w-60 text-sm">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Bouton d'aide moderne -->
+        <div class="relative">
+          <button (click)="toggleHelp()" (mouseenter)="showTooltip = true" (mouseleave)="showTooltip = false"
+            class="inline-flex items-center gap-2 px-4 py-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium border border-blue-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </button>
+
+          <!-- Tooltip modernisé -->
+          @if (showTooltip || showHelp) {
+          <div
+            class="absolute right-0 top-full mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 z-50 text-sm">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="space-y-3">
+                <h4 class="font-semibold text-gray-900 text-base">💡 Fonctionnalités interactives</h4>
+                <ul class="space-y-2 text-xs text-gray-600 leading-relaxed">
+                  <li class="flex items-start gap-2">
+                    <span class="w-1 h-1 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+                    <span><strong>Réorganiser :</strong> Glissez-déposez les en-têtes</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="w-1 h-1 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+                    <span><strong>Redimensionner :</strong> Bordures droites des en-têtes</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="w-1 h-1 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+                    <span><strong>Masquer/Afficher :</strong> ✕ au survol ou "Gérer colonnes"</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="w-1 h-1 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+                    <span><strong>Trier :</strong> Cliquez sur les en-têtes</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="w-1 h-1 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+                    <span><strong>Exporter :</strong> Excel / PDF avec filtres temporels</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="w-1 h-1 bg-amber-400 rounded-full mt-2 flex-shrink-0"></span>
+                    <span><strong>Attention :</strong> N°TICKET & INTERVENANT sont masquées par défaut</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="w-1 h-1 bg-green-400 rounded-full mt-2 flex-shrink-0"></span>
+                    <span><strong>Statut en attente :</strong> Validation possible dans la colonne actions</span>
+                  </li>
+                </ul>
+                <button (click)="showHelp = false"
+                  class="px-3 py-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Affichage des filtres actifs -->
+    @if (hasActiveFilters()) {
+    <div class="mb-4 sm:mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0">
+        <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+          <span class="text-sm font-medium text-blue-800">Filtres actifs :</span>
+          <div class="flex flex-wrap gap-2">
+            @for (filter of getActiveFilters(); track filter.key) {
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm badge-blue">
+              <strong>{{ filter.label }}:</strong>&nbsp;{{ filter.value }}
+              <button (click)="removeFilter(filter.key || '', filter.type)"
+                class="ml-2 text-blue-600 hover:text-blue-800 font-bold" title="Supprimer ce filtre">
+                ×
+              </button>
+            </span>
+            }
+          </div>
+        </div>
+        <button (click)="clearAllFilters()"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
+          🗑️ Effacer tous les filtres
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Menu contextuel de gestion des colonnes -->
+    @if (showColumnMenu) {
+    <div class="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[250px]"
+      [style.left.px]="columnMenuPosition.x" [style.top.px]="columnMenuPosition.y">
+
+      <div class="px-4 py-2 border-b border-gray-200">
+        <h3 class="font-medium text-gray-900">Gestion des colonnes</h3>
+      </div>
+
+      <!-- Colonnes visibles -->
+      <div class="px-4 py-2">
+        <h4 class="text-sm font-medium text-gray-700 mb-2">Colonnes affichées</h4>
+        <div class="space-y-1">
+          @for (column of visibleColumns; track column) {
+          <div class="flex items-center justify-between text-sm py-1">
+            <span class="text-gray-900">{{ column.label }}</span>
+            <button (click)="$event.stopPropagation(); toggleColumnVisibilityKeepOpen(column.key)"
+              class="text-red-600 hover:text-red-800 text-xs px-2 py-1 hover:bg-red-50 rounded">
+              Masquer
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Colonnes masquées -->
+      @if (hiddenColumns.length > 0) {
+      <div class="px-4 py-2 border-t border-gray-100">
+        <h4 class="text-sm font-medium text-gray-700 mb-2">Colonnes masquées</h4>
+        <div class="space-y-1">
+          @for (column of hiddenColumns; track column) {
+          <div class="flex items-center justify-between text-sm py-1">
+            <span class="text-gray-500">{{ column.label }}</span>
+            <button (click)="$event.stopPropagation(); toggleColumnVisibilityKeepOpen(column.key)"
+              class="text-green-600 hover:text-green-800 text-xs px-2 py-1 hover:bg-green-50 rounded">
+              Afficher
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+      }
+
+      <div class="border-t border-gray-200 px-4 py-2">
+        <button (click)="resetColumnsAndCloseMenu()"
+          class="w-full text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 py-1 rounded">
+          Réinitialiser par défaut
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Recherche avancée avec AppConfigService -->
+    @if (showAdvancedFilters) {
+    <div class="mb-4 sm:mb-6 p-4 mt-4 bg-white rounded-lg shadow-sm border border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Recherche avancée</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ID</label>
+          <input type="text" [(ngModel)]="advancedFilters.id"
+            (input)="setAdvancedFilter('id', $any($event.target).value)" placeholder="Ex: 20257"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Objet</label>
+          <input type="text" [(ngModel)]="advancedFilters.object"
+            (input)="setAdvancedFilter('object', $any($event.target).value)" placeholder="Ex: Coupure"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Domaine dynamique -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Domaine</label>
+          <select [(ngModel)]="advancedFilters.domain" (change)="setAdvancedFilter('domain', $any($event.target).value)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+            <option value="">Tous</option>
+            @for (option of getDomainFilterOptions(); track option.value) {
+            <option [value]="option.value">
+              {{ option.label }}
+            </option>
+            }
+          </select>
+        </div>
+
+        <!-- Gravité dynamique -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Gravité</label>
+          <select [(ngModel)]="advancedFilters.gravity"
+            (change)="setAdvancedFilter('gravity', $any($event.target).value)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+            <option value="">Tous</option>
+            @for (option of getGravityFilterOptions(); track option.value) {
+            <option [value]="option.value">
+              {{ option.label }}
+            </option>
+            }
+          </select>
+        </div>
+
+        <!-- Statut dynamique -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+          <select [(ngModel)]="advancedFilters.status" (change)="setAdvancedFilter('status', $any($event.target).value)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+            <option value="">Tous (hors archives)</option>
+            @for (option of getStatusFilterOptions(); track option.value) {
+            <option [value]="option.value">
+              {{ option.label }}
+            </option>
+            }
+          </select>
+        </div>
+
+        <!-- Sites dynamiques avec groupes -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Sites impactés</label>
+          <select [(ngModel)]="advancedFilters.siteImpacte"
+            (change)="setAdvancedFilter('siteImpacte', $any($event.target).value)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+            <option value="">Tous les sites</option>
+
+            <!-- Groupes dynamiques de sites -->
+            @for (group of getGroupedSiteOptions(); track group.label) {
+            <optgroup [label]="group.label">
+              @for (option of group.options; track option.value) {
+              <option [value]="option.value">
+                {{ option.label }}
+              </option>
+              }
+            </optgroup>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rédacteur</label>
+          <input type="text" [(ngModel)]="advancedFilters.redacteur_id"
+            (input)="setAdvancedFilter('redacteur_id', $any($event.target).value)" placeholder="Ex: Dupont"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Intervenant (à afficher dans 🔧 Colonnes)</label>
+          <input type="text" [(ngModel)]="advancedFilters.intervenant_id"
+            (input)="setAdvancedFilter('intervenant_id', $any($event.target).value)"
+            placeholder="Ex: Martin (à afficher dans 🔧 Colonnes)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label for="date-from" class="block text-sm font-medium text-gray-700 mb-1">De la date du (sur date
+            d'ouverture)</label>
+          <input type="date" id="date-from" [value]="advancedFilters.dateFrom"
+            (change)="setAdvancedFilter('dateFrom', $any($event.target).value)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            title="Date de début de la période">
+        </div>
+
+        <!-- Date de fin (Au) -->
+        <div>
+          <label for="date-to" class="block text-sm font-medium text-gray-700 mb-1">A la date au (sur date
+            d'ouverture)</label>
+          <input type="date" id="date-to" [value]="advancedFilters.dateTo"
+            (change)="setAdvancedFilter('dateTo', $any($event.target).value)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            title="Date de fin de la période">
+        </div>
+
+        <div class="flex items-end">
+          <button (click)="resetAdvancedFilters()"
+            class="w-full bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors">
+            Réinitialiser
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Espacement boutons et tableau -->
+    <div class="mt-4"></div>
+
+    <!-- Tableau principal avec gestion interactive des colonnes -->
+    @if (isLoadingTable) {
+    <div class="text-center py-16">
+      <div class="spinner mx-auto"></div>
+      <p class="text-lg text-gray-600 mt-4">Chargement des incidents...</p>
+    </div>
+    }
+
+    @if (!isLoadingTable) {
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full divide-y divide-gray-200 min-w-full" style="table-layout: auto;">
+
+          <!-- En-têtes des colonnes avec fonctionnalités interactives -->
+          <thead class="bg-gray-50">
+            <tr>
+              @for (column of visibleColumns; track column.key) {
+              <th [style]="getColumnStyle(column.key)"
+                class="relative group px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                [ngClass]="{ 
+                      'bg-blue-50 text-blue-700': isSorted(column.key),
+                      'bg-yellow-100': isDragging(column.key),
+                      'bg-green-100': isDragOver(column.key),
+                      'border-r-2 border-blue-500': isResizing(column.key),
+                      'header-multiline': column.key === 'dateOuverture' || column.key === 'dateCloture'
+                    }" (click)="column.sortable && sortBy(column.key)" draggable="true"
+                (dragstart)="startColumnDrag($event, column.key)" (dragover)="onColumnDragOver($event, column.key)"
+                (drop)="onColumnDrop($event, column.key)" (dragend)="resetDragState()">
+
+                <!-- Contenu principal de l'en-tête -->
+                <div class="flex items-center justify-center space-x-1">
+                  <span>{{ column.label }}</span>
+                  @if (column.sortable) {
+                  <span class="text-xs">{{ getSortIcon(column.key) }}</span>
+                  }
+                </div>
+
+                <!-- Indicateur de drag -->
+                @if (isDragging(column.key)) {
+                <div class="absolute inset-0 bg-yellow-200 opacity-50 pointer-events-none">
+                </div>
+                }
+
+                <!-- Zone de redimensionnement -->
+                <div
+                  class="absolute top-0 right-0 w-2 h-full cursor-col-resize hover:bg-blue-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                  (mousedown)="startResize($event, column.key)" title="Redimensionner la colonne"></div>
+
+                <!-- Menu contextuel (clic droit) -->
+                <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button (click)="$event.stopPropagation(); toggleColumnVisibility(column.key)"
+                    class="text-xs text-gray-400 hover:text-red-600 p-1" title="Masquer cette colonne">
+                    ✕
+                  </button>
+                </div>
+              </th>
+              }
+
+              <!-- Colonne Actions en mode admin -->
+              @if (isAdminModeActive) {
+              <th
+                class="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider w-20">
+                Actions
+              </th>
+              }
+            </tr>
+          </thead>
+
+          <!-- Corps du tableau -->
+          <tbody class="bg-white divide-y divide-gray-200">
+            <!-- Message "Aucun résultat trouvé" -->
+            @if (paginatedIncidents.length === 0) {
+            <tr>
+              <td [attr.colspan]="visibleColumns.length + (isAdminModeActive ? 1 : 0)" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center space-y-4">
+                  <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                  </svg>
+
+                  <div class="text-center">
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">
+                      {{ hasActiveFilters() ? 'Aucun incident trouvé' : 'Aucun incident enregistré' }}
+                    </h3>
+
+                    @if (hasActiveFilters()) {
+                    <p class="text-sm text-gray-500 mb-4">
+                      Aucun incident ne correspond à vos critères de recherche.
+                      <br>Essayez de modifier ou supprimer certains filtres.
+                    </p>
+                    }
+
+                    @if (!hasActiveFilters()) {
+                    <p class="text-sm text-gray-500 mb-4">
+                      Il n'y a actuellement aucun incident de sécurité enregistré.
+                    </p>
+                    }
+
+                    @if (hasActiveFilters()) {
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                      <button (click)="clearAllFilters()"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                        🗑️ Effacer tous les filtres
+                      </button>
+                      <button (click)="toggleAdvancedSearch()"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors">
+                        🔍 Modifier la recherche
+                      </button>
+                    </div>
+                    }
+
+                    @if (!hasActiveFilters() && permissionService.canCreateIncident()) {
+                    <div>
+                      <button (click)="navigateToCreate()"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                        ⚠️ Ajouter le premier incident
+                      </button>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </td>
+            </tr>
+            }
+
+            <!-- Données du tableau (si présentes) -->
+            @for (incident of paginatedIncidents; track incident.id) {
+            <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="viewIncidentDetail(incident)">
+
+              <!-- Cellules générées dynamiquement selon la configuration des colonnes -->
+              @for (column of visibleColumns; track column.key) {
+              <td [style]="getColumnStyle(column.key)"
+                class="px-2 sm:px-4 py-3 sm:py-5 text-xs sm:text-sm text-center overflow-hidden">
+
+                <!-- Contenu spécifique selon le type de colonne -->
+                @switch (column.key) {
+
+                <!-- ID -->
+                @case ('id') {
+                <span class="font-mono text-gray-900">
+                  #{{ incident.id }}
+                </span>
+                }
+
+                <!-- Objet -->
+                @case ('object') {
+                <div class="text-gray-900 leading-relaxed max-w-xs mx-auto">
+                  <div class="whitespace-normal break-words text-xs sm:text-sm" [title]="incident.object">
+                    {{ incident.object }}
+                  </div>
+                </div>
+                }
+
+                <!-- Domaines -->
+                @case ('domains') {
+                <div class="flex flex-wrap gap-1 justify-center">
+                  @for (domain of incident.domains; track domain) {
+                  <span class="inline-block px-2 py-1 text-xs font-medium badge-blue rounded-sm">
+                    {{ getShortDomain(domain) }}
+                  </span>
+                  }
+                </div>
+                }
+
+                <!-- Gravité -->
+                @case ('gravity') {
+                <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium"
+                  [ngClass]="incident.gravity ? gravityConfig[incident.gravity].colorClass : ''">
+                  @if (incident.gravity) {
+                  {{ gravityConfig[incident.gravity].label }}
+                  }
+                </span>
+                }
+
+                <!-- Statut -->
+                @case ('status') {
+                @if (incident.status === 'en_attente') {
+                <span class="font-semibold text-xs sm:text-sm leading-tight"
+                  [ngClass]="getStatusTextClass(incident.status)">
+                  En attente<br>de validation
+                </span>
+                } @else {
+                <span class="font-semibold text-xs sm:text-sm" [ngClass]="getStatusTextClass(incident.status)">
+                  {{ statusConfig[incident.status].label }}
+                </span>
+                }
+                }
+
+                <!-- Date d'ouverture -->
+                @case ('dateOuverture') {
+                <div class="font-mono leading-relaxed">
+                  <div class="text-gray-900 text-xs sm:text-sm">{{
+                    incidentDisplayService.formatDateShort(incident.dateOuverture) }}</div>
+                  <div class="text-gray-500 text-xs">{{ incidentDisplayService.formatTimeShort(incident.dateOuverture)
+                    }}</div>
+                </div>
+                }
+
+                <!-- Date de clôture -->
+                @case ('dateCloture') {
+                <div class="font-mono leading-relaxed">
+                  @if (incident.dateCloture) {
+                  <div class="text-gray-900 text-xs sm:text-sm">{{
+                    incidentDisplayService.formatDateShort(incident.dateCloture) }}</div>
+                  <div class="text-gray-500 text-xs">{{ incidentDisplayService.formatTimeShort(incident.dateCloture) }}
+                  </div>
+                  } @else {
+                  <div class="text-gray-400">-</div>
+                  }
+                </div>
+                }
+
+                <!-- Site Impactés -->
+                @case ('sitesImpactes') {
+                <div class="space-y-1">
+                  <!-- Afficher les sites sélectionnés (sitesImpactes) -->
+                  @if (incident.sitesImpactes && incident.sitesImpactes.length > 0) {
+                  <div class="flex flex-wrap gap-1 justify-center">
+                    @for (siteImpacte of incident.sitesImpactes; track siteImpacte) {
+                    <span class="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded border"
+                      [title]="siteImpacte">
+                      {{ getShortSiteImpacte(siteImpacte) }}
+                    </span>
+                    }
+                  </div>
+                  } @else {
+                  <!-- Si aucun site -->
+                  <div class="text-gray-400">
+                    -
+                  </div>
+                  }
+                </div>
+                }
+
+                <!-- National -->
+                @case ('isNational') {
+                @if (incident.isNational) {
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium badge-purple">
+                  Oui
+                </span>
+                } @else {
+                <div class="text-gray-400">-</div>
+                }
+                }
+
+                <!-- Numéro de ticket -->
+                @case ('ticketNumber') {
+                <div class="font-mono text-gray-900 truncate text-xs sm:text-sm" [title]="incident.ticketNumber">
+                  {{ incident.ticketNumber || '-' }}
+                </div>
+                }
+
+                <!-- Rédacteur -->
+                @case ('redacteur_id') {
+                <div class="line-clamp-2 leading-relaxed text-gray-900 text-xs sm:text-sm"
+                  [title]="incident.creator?.full_name">
+                  {{ incident.creator?.full_name || '-' }}
+                </div>
+                }
+
+                <!-- Intervenant -->
+                @case ('intervenant_id') {
+                <div class="line-clamp-2 leading-relaxed text-gray-900 text-xs sm:text-sm"
+                  [title]="incident.assignee?.full_name">
+                  {{ incident.assignee?.full_name || '-' }}
+                </div>
+                }
+
+                <!-- Actions à faire -->
+                @case ('has_pending_actions') {
+                <span class="font-semibold"
+                  [ngClass]="incident.has_pending_actions ? 'text-red-600' : 'text-green-600'">
+                  {{ incident.has_pending_actions ? 'Oui' : 'Non' }}
+                </span>
+                }
+
+                }
+              </td>
+              }
+
+              <!-- Actions (mode admin) -->
+              @if (isAdminModeActive) {
+              <td class="px-2 sm:px-4 py-3 sm:py-5 whitespace-nowrap text-sm font-medium text-center"
+                (click)="$event.stopPropagation()">
+                <div class="flex flex-col space-y-2 items-center">
+
+                  <!-- Validation - Protection can_validate -->
+                  @if (permissionService.canValidateIncidents() && needsValidation(incident)) {
+                  <button (click)="validateIncident(incident)"
+                    class="text-green-600 hover:text-green-900 transition-colors"
+                    [disabled]="validating === incident.id" title="Valider cet incident grave">
+                    @if (validating === incident.id) {
+                    <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    } @else {
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    }
+                  </button>
+                  }
+
+                  <!-- Modifier - Protection can_modify -->
+                  @if (permissionService.canModifyIncident()) {
+                  <button (click)="navigateToUpdate(incident)"
+                    class="text-gray-600 hover:text-gray-900 transition-colors" title="Modifier l'incident">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  }
+
+                  <!-- Archiver - Protection can_archive -->
+                  @if (permissionService.canArchiveIncidents() && incident.status === 'cloture' &&
+                  filterState.advancedFilters.status !==
+                  'archive') {
+                  <button (click)="archiveIncident(incident)"
+                    class="text-blue-600 hover:text-blue-900 transition-colors" title="Archiver l'incident">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h18">
+                      </path>
+                    </svg>
+                  </button>
+                  }
+
+                  <!-- Désarchiver - Protection can_unarchive -->
+                  @if (permissionService.canUnarchiveIncidents() && filterState.advancedFilters.status === 'archive') {
+                  <button (click)="restoreIncident(incident)"
+                    class="text-green-600 hover:text-green-900 transition-colors" title="Désarchiver l'incident">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M7 9l3 3-3 3">
+                      </path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20 20v-5h-5M17 15l-3-3 3-3"></path>
+                    </svg>
+                  </button>
+                  }
+
+                  <!-- Supprimer - Protection can_force_delete -->
+                  @if (permissionService.canSoftDeleteIncident()) {
+                  <button (click)="deleteIncident(incident)" class="text-red-600 hover:text-red-900 transition-colors"
+                    title="Supprimer l'incident">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                  }
+
+                </div>
+              </td>
+              }
+
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer du tableau avec pagination -->
+      <div class="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+          <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <div class="text-sm text-gray-700">
+              {{ getPaginationInfo() }}
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <select (change)="onPageSizeChange($event)" [value]="pageSize"
+                class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 bg-white text-gray-900">
+                @for (size of availablePageSizes; track size) {
+                <option [value]="size" [selected]="size === pageSize">{{ size }}</option>
+                }
+                <option value="all" [selected]="showAllResults">Tout</option>
+              </select>
+              <span class="text-sm text-gray-600">par page</span>
+            </div>
+          </div>
+
+          <!-- Navigation de pagination avec classes spécifiques -->
+          @if (!showAllResults && totalPages > 1) {
+          <div class="pagination flex items-center space-x-1">
+            <button (click)="previousPage()" [disabled]="currentPage === 1"
+              class="px-2 sm:px-3 py-2 text-sm border rounded-md transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              [class.opacity-50]="currentPage === 1" [class.cursor-not-allowed]="currentPage === 1">
+              ← Précédent
+            </button>
+
+            <div class="flex items-center space-x-1">
+              @for (page of visiblePages; track page) {
+              <button (click)="page > 0 ? goToPage(page) : null" [disabled]="page === -1"
+                class="px-2 sm:px-3 py-2 text-sm border rounded-md transition-colors min-w-[32px] sm:min-w-[40px] text-center"
+                [class.bg-blue-600]="page === currentPage" [class.text-white]="page === currentPage"
+                [class.border-blue-600]="page === currentPage" [class.bg-white]="page !== currentPage && page > 0"
+                [class.text-gray-700]="page !== currentPage && page > 0"
+                [class.border-gray-300]="page !== currentPage && page > 0"
+                [class.hover:bg-gray-50]="page !== currentPage && page > 0" [class.text-gray-400]="page === -1"
+                [class.cursor-default]="page === -1">
+                {{ page === -1 ? '...' : page }}
+              </button>
+              }
+            </div>
+
+            <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+              class="px-2 sm:px-3 py-2 text-sm border rounded-md transition-colors bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              [class.opacity-50]="currentPage === totalPages" [class.cursor-not-allowed]="currentPage === totalPages">
+              Suivant →
+            </button>
+          </div>
+          }
+
+          @if (showAllResults) {
+          <div class="text-sm text-gray-500">
+            Tous les incidents sont affichés
+          </div>
+          }
+        </div>
+      </div>
+
+    </div>
+    }
+    } @else {
+    <!-- Message d'accès refusé stylisé -->
+    <div class="bg-gray-50 flex items-center justify-center py-20 px-4">
+      <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <!-- Icône -->
+        <div class="flex justify-center mb-6">
+          <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
+            <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+        </div>
+        <!-- Titre -->
+        <h2 class="text-2xl font-bold text-gray-900 text-center mb-4">
+          Accès non autorisé
+        </h2>
+        <!-- Message -->
+        <p class="text-gray-600 text-center mb-6 leading-relaxed">
+          Vous n'avez pas les permissions nécessaires pour accéder à la base d'incidents de sécurité.
+        </p>
+        <!-- Informations -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+          <p class="text-sm text-gray-700 mb-2">
+            <strong>Raison possible :</strong>
+          </p>
+          <ul class="text-sm text-gray-600 space-y-1 list-disc list-inside">
+            <li>Votre rôle n'autorise pas la consultation des incidents</li>
+            <li>Votre session a peut-être expiré</li>
+            <li>Vos droits ont été modifiés récemment</li>
+          </ul>
+        </div>
+        <!-- Actions -->
+        <div class="space-y-3">
+          <button (click)="authService.reconnect()"
+            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Se reconnecter
+          </button>
+        </div>
+        <!-- Contact support (optionnel) -->
+        <p class="text-xs text-gray-500 text-center mt-6">
+          Si vous pensez qu'il s'agit d'une erreur, contactez votre administrateur système.
+        </p>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- ===== MODALES EXTERNALISÉES ===== -->
+
+  <!-- Modal Export (XLSX/PDF) -->
+  <app-export-modal [isVisible]="showExportModal" [incidents]="incidents" [filteredIncidents]="filteredIncidents"
+    [paginatedIncidents]="paginatedResult.items" [hasActiveFilters]="hasActiveFilters()" [exportType]="exportModalType"
+    (close)="closeExportModal()" (export)="onExportExecute($event)"></app-export-modal>
+
+  <!-- Modal Groupes de Diffusion -->
+  <app-diffusion-list [isVisible]="showDiffusionModal" (close)="closeDiffusionModal()"></app-diffusion-list>
+
+  <!-- Modal Corbeille -->
+  <app-trash-modal [isVisible]="showTrashModal" (close)="closeTrashModal()"></app-trash-modal>
+</div>

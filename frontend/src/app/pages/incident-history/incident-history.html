@@ -1,0 +1,135 @@
+<!-- src/app/components/incident-history/incident-history.html -->
+<div class="max-w-5xl mx-auto p-6">
+  <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+    <span class="text-3xl">📜</span>
+    Journal des modifications
+  </h2>
+
+  @if (loading) {
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700">
+      Chargement de l'historique...
+    </div>
+  }
+
+  @if (error) {
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+      {{ error }}
+    </div>
+  }
+
+  @if (!loading && !error && histories.length === 0) {
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-500">
+      Aucun historique disponible.
+    </div>
+  }
+
+  @if (!loading && !error && histories.length > 0) {
+    <div class="space-y-3">
+      @for (history of histories; track history.id) {
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <!-- En-tête cliquable -->
+          <button
+            (click)="toggleExpand(history.id)"
+            class="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left">
+            
+            <!-- Icône de l'action -->
+            <span 
+              class="text-2xl flex-shrink-0"
+              [style.color]="getActionColor(history.action)">
+              {{ getActionIcon(history.action) }}
+            </span>
+
+            <!-- Informations principales (compact) -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <strong class="font-semibold text-gray-900">{{ history.action_label }}</strong>
+                <span class="text-sm text-gray-600">par {{ history.user.name }}</span>
+                <span class="text-sm text-gray-400">{{ history.created_at_human }}</span>
+              </div>
+            </div>
+
+            <!-- Flèche d'expansion -->
+            <span class="text-gray-400 text-xl flex-shrink-0">
+              {{ isExpanded(history.id) ? '▼' : '▶' }}
+            </span>
+          </button>
+
+          <!-- Détails dépliables -->
+          @if (isExpanded(history.id)) {
+            <div class="px-4 pb-4 border-t border-gray-100">
+              <!-- Métadonnées en grid compact -->
+              <div class="grid grid-cols-2 gap-4 py-3 text-sm">
+                <div>
+                  <span class="text-gray-500">Utilisateur :</span>
+                  <span class="ml-2 font-medium">{{ history.user.name }}</span>
+                  <span class="text-gray-400 ml-1">({{ history.user.email }})</span>
+                </div>
+                <div>
+                  <span class="text-gray-500">Date :</span>
+                  <span class="ml-2 font-medium">{{ formatDate(history.created_at) }}</span>
+                </div>
+              </div>
+
+              @if (history.reason) {
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mb-3 text-sm">
+                  <strong class="text-blue-900">Raison :</strong>
+                  <span class="ml-2 text-blue-800">{{ history.reason }}</span>
+                </div>
+              }
+
+              <!-- Changements en tableau avant/après -->
+              @if (history.changes && history.changes.length > 0) {
+                <div class="mt-3">
+                  <strong class="text-gray-700 block mb-2">Champs modifiés :</strong>
+                  
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-200 rounded text-sm">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Champ</th>
+                          <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Avant</th>
+                          <th class="px-4 py-2 text-left font-semibold text-gray-700 border-b">Après</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (change of history.changes; track change.field_key) {
+                          <tr class="border-b last:border-b-0 hover:bg-gray-50">
+                            <td class="px-4 py-3 font-medium text-gray-700 align-top">
+                              {{ getFieldLabel(change.field) }}
+                            </td>
+                            <td class="px-4 py-3 text-gray-600 align-top max-w-xs">
+                              @if (!isValueEmpty(change.old_value)) {
+                                <span class="text-red-600">{{ formatChangeValue(change.old_value) }}</span>
+                              } @else {
+                                <span class="text-gray-400 italic">Non renseigné</span>
+                              }
+                            </td>
+                            <td class="px-4 py-3 text-gray-900 align-top max-w-xs">
+                              @if (!isValueEmpty(change.new_value)) {
+                                <span class="text-green-600 font-medium">{{ formatChangeValue(change.new_value) }}</span>
+                              } @else {
+                                <span class="text-gray-400 italic">Non renseigné</span>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
+
+              <!-- Snapshot complet (accordéon) -->
+              <details class="mt-4">
+                <summary class="cursor-pointer text-sm text-gray-600 hover:text-gray-900 font-medium py-2 px-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
+                  Voir l'état complet (snapshot)
+                </summary>
+                <pre class="mt-2 p-3 bg-gray-900 text-gray-100 rounded text-xs overflow-x-auto">{{ formatSnapshotForDisplay(history.snapshot) }}</pre>
+              </details>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
