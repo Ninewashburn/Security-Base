@@ -14,7 +14,6 @@
 ## 📋 Table des matières
 
 - [Présentation](#-présentation)
-- [Screenshots](#screenshots)
 - [Architecture](#-architecture)
 - [Fonctionnalités](#-fonctionnalités)
 - [Installation](#-installation)
